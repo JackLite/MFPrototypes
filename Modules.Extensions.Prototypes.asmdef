@@ -1,0 +1,16 @@
+{
+    "name": "Modules.Extensions.Prototypes",
+    "rootNamespace": "Modules.Extensions.Prototypes",
+    "references": [
+        "ModulesFramework.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

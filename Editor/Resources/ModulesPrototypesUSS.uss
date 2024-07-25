@@ -1,0 +1,70 @@
+﻿/* Add Component Modal */
+
+.modules-proto--add-component-modal {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.modules-proto--add-component--container {
+    flex-direction: row;
+    padding-left: 6px;
+    padding-right: 6px;
+    margin-top: 5px;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    flex-wrap: wrap;
+}
+
+.modules-proto--add-component--container > Button {
+    width: 150px;
+    height: 24px;
+    font-size: 14px;
+}
+
+/* Component */
+
+.modules-proto--prototype-title {
+    font-size: 16px;
+    border-top-color: #555555;
+    border-top-width: 2px;
+    margin-top: 5px;
+    padding-top: 5px;
+    margin-bottom: 10px;
+}
+
+.modules-proto--components-container {
+    margin-left: 12px;
+    margin-right: 12px;
+}
+
+.modules-proto--property-container {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+}
+
+.modules-proto--property-container > PropertyField {
+    flex-grow: 1;
+    margin-right: 30px;
+}
+
+.modules-proto--property-container > PropertyField > Foldout > Toggle {
+    font-size: 14px;
+}
+
+.modules-proto--property-container > PropertyField > * > Label {
+    font-size: 14px;
+}
+
+.modules-proto--remove-btn {
+    font-size: 14px;
+    height: 20px;
+}
+
+.modules-proto--add-component-btn {
+    font-size: 15px;
+    align-self: flex-start;
+}

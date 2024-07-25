@@ -1,0 +1,23 @@
+{
+    "name": "Modules.Extensions.Prototypes.Editor",
+    "rootNamespace": "Modules.Extensions.Prototypes.Editor",
+    "references": [
+        "Modules.Extensions.Prototypes",
+        "ModulesFramework.Core",
+        "ModulesFramework.UnityAdapter"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Mono.Cecil.Pdb.dll",
+        "Mono.Cecil.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
