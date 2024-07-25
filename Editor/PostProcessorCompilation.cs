@@ -1,8 +1,11 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
+using System.Threading;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using UnityEditor;
 using UnityEditor.Compilation;
+using UnityEngine;
 
 namespace Modules.Extensions.Prototypes.Editor
 {
@@ -18,36 +21,53 @@ namespace Modules.Extensions.Prototypes.Editor
         {
             if (compilerMessages.Any(c => c.type == CompilerMessageType.Error))
                 return;
-            if (assemblyPath.Contains("Modules.Extensions.Prototypes"))
-                return;
+
             CreateComponentsWrappers(assemblyPath);
         }
 
         private static void CreateComponentsWrappers(string assemblyPath)
         {
-            var assembly = AssemblyDefinition.ReadAssembly(assemblyPath, new ReaderParameters(ReadingMode.Immediate)
+            AssemblyDefinition assembly;
+            var mutex = new Mutex();
+            try
             {
-                ReadWrite = true,
-                AssemblyResolver = new AssemblyResolver(assemblyPath),
-                ReadSymbols = true,
-                ReadingMode = ReadingMode.Immediate
-            });
-            var module = assembly.MainModule;
+                mutex.WaitOne();
+                using var fileStream =
+                    new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                assembly = AssemblyDefinition.ReadAssembly(fileStream, new ReaderParameters(ReadingMode.Immediate)
+                {
+                    ReadWrite = true,
+                    AssemblyResolver = new AssemblyResolver(assemblyPath),
+                    ReadSymbols = true,
+                    ReadingMode = ReadingMode.Immediate
+                });
 
-            var attrRef = module.ImportReference(typeof(SerializedComponentAttribute)).Resolve();
-            var serializedTypes = module.GetTypes()
-                .Where(t => t.CustomAttributes.Any(attr => attr.AttributeType.Resolve() == attrRef))
-                .ToList();
+                var module = assembly.MainModule;
 
-            foreach (var type in serializedTypes)
-            {
-                CreateWrapper(module, type);
+                var attrRef = module.ImportReference(typeof(SerializedComponentAttribute)).Resolve();
+                var serializedTypes = module.GetTypes()
+                    .Where(t => t.CustomAttributes.Any(attr => attr.AttributeType.Resolve() == attrRef))
+                    .ToList();
+
+                foreach (var type in serializedTypes)
+                {
+                    CreateWrapper(module, type);
+                }
+
+                assembly.Write(new WriterParameters
+                {
+                    WriteSymbols = true
+                });
             }
-
-            assembly.Write(new WriterParameters
+            catch (IOException e)
             {
-                WriteSymbols = true
-            });
+                Debug.LogWarning("Failed to read assembly: " + assemblyPath + "\n\r Exception: " + e);
+                return;
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
+            }
 
             EditorUtility.RequestScriptReload();
         }
