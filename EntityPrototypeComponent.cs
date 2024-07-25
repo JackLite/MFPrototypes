@@ -25,6 +25,11 @@ namespace Modules.Extensions.Prototypes
                 entityProvider.entity = ent;
                 entityProvider.destroyEntityWhenDestroyed = destroyEntityWithGameObject;
             }
+            else if (gameObject.TryGetComponent<EntityProvider>(out var entityProvider))
+            {
+                entityProvider.entity = ent;
+                entityProvider.destroyEntityWhenDestroyed = destroyEntityWithGameObject;
+            }
 
             Destroy(this);
         }
