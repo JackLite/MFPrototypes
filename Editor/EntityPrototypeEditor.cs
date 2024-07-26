@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ModulesFrameworkUnity.Utils;
@@ -18,7 +19,7 @@ namespace Modules.Extensions.Prototypes.Editor
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             SerializationUtility.ClearAllManagedReferencesWithMissingTypes(property.serializedObject.targetObject);
-            var root = new VisualElement();
+            var root = CreateRoot(property);
             var styles = Resources.Load<StyleSheet>("ModulesPrototypesUSS");
             root.styleSheets.Add(styles);
             root.AddToClassList("modules-proto--inspector");
@@ -26,15 +27,26 @@ namespace Modules.Extensions.Prototypes.Editor
             _componentsContainer = new VisualElement();
             _componentsContainer.AddToClassList("modules-proto--components-container");
 
-            var title = new Label(property.displayName);
-            title.AddToClassList("modules-proto--prototype-title");
-            root.Add(title);
-
             root.Add(_componentsContainer);
             DrawComponents(property);
 
             DrawAddComponent(property, root);
 
+            return root;
+        }
+
+        private Foldout CreateRoot(SerializedProperty property)
+        {
+            var root = new Foldout();
+            root.SetValueWithoutNotify(EditorPrefs.GetBool(GetPrefKey(property)));
+            root.RegisterValueChangedCallback(ev =>
+            {
+                if (ev.propagationPhase != PropagationPhase.AtTarget)
+                    return;
+                EditorPrefs.SetBool(GetPrefKey(property), ev.newValue);
+            });
+            root.text = property.displayName;
+            root.Q<Label>().AddToClassList("modules-proto--prototype-title");
             return root;
         }
 
@@ -96,7 +108,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
             for (var index = 0; index < componentsProp.arraySize;)
             {
-                var propertyContainer = new VisualElement();
+                var propertyContainer = new ComponentContainer();
                 propertyContainer.AddToClassList("modules-proto--property-container");
                 var element = componentsProp.GetArrayElementAtIndex(index);
                 if (element.boxedValue == null)
@@ -105,17 +117,36 @@ namespace Modules.Extensions.Prototypes.Editor
                     continue;
                 }
 
-                var componentField = new PropertyField(element);
+                var innerComponent = element.FindPropertyRelative("component");
                 var componentType = (element.managedReferenceValue as MonoComponent).ComponentType;
-                componentField.label = componentType.Name;
-                componentField.Bind(componentsProp.serializedObject);
-                propertyContainer.Add(componentField);
+
+                if (innerComponent.hasChildren)
+                {
+                    var componentField = new PropertyField(innerComponent);
+                    componentField.label = componentType.Name;
+                    componentField.Bind(componentsProp.serializedObject);
+                    propertyContainer.Add(componentField);
+                }
+                else
+                {
+                    var label = new Label(componentType.Name);
+                    propertyContainer.Add(label);
+                }
+
+                propertyContainer.componentType = componentType;
 
                 var btn = CreateRemoveBtn(property, index);
                 propertyContainer.Add(btn);
                 index++;
                 _componentsContainer.Add(propertyContainer);
             }
+
+            _componentsContainer.Sort((el1, el2) =>
+            {
+                var name1 = ((ComponentContainer)el1).componentType.Name;
+                var name2 = ((ComponentContainer)el2).componentType.Name;
+                return string.Compare(name1, name2, StringComparison.Ordinal);
+            });
         }
 
         private VisualElement CreateRemoveBtn(SerializedProperty property, int index)
@@ -155,6 +186,17 @@ namespace Modules.Extensions.Prototypes.Editor
             }
 
             return false;
+        }
+
+        private string GetPrefKey(SerializedProperty property)
+        {
+            return property.serializedObject.targetObject.GetInstanceID()
+                   + property.name;
+        }
+
+        private class ComponentContainer : VisualElement
+        {
+            public Type componentType;
         }
     }
 }

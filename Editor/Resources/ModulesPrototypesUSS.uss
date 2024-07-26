@@ -6,6 +6,18 @@
     margin-right: 10px;
 }
 
+.modules-proto--add-component--search-input {
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.modules-proto--add-component--search-input > Label {
+    font-size: 14px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
 .modules-proto--add-component--container {
     flex-direction: row;
     padding-left: 6px;
@@ -33,6 +45,10 @@
     padding-bottom: 5px;
 }
 
+.modules-proto--inspector > Toggle {
+    padding-left: 12px;
+}
+
 .modules-proto--prototype-title {
     font-size: 16px;
 }
@@ -53,6 +69,13 @@
 .modules-proto--property-container > PropertyField {
     flex-grow: 1;
     margin-right: 30px;
+}
+
+.modules-proto--property-container > Label {
+    flex-grow: 1;
+    margin-right: 30px;
+    font-size: 14px;
+    align-self: center;
 }
 
 .modules-proto--property-container > PropertyField > Foldout > Toggle {
