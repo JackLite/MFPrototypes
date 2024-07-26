@@ -43,7 +43,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
         private static string GetSerializedName(Type type)
         {
-            var attr = type.GetCustomAttribute<SerializedComponentAttribute>();
+            var attr = type.GetCustomAttribute<PrototypeAttribute>();
             return attr != null ? attr.name : type.Name;
         }
     }

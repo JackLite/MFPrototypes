@@ -44,7 +44,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
                 var module = assembly.MainModule;
 
-                var attrRef = module.ImportReference(typeof(SerializedComponentAttribute)).Resolve();
+                var attrRef = module.ImportReference(typeof(PrototypeAttribute)).Resolve();
                 var serializedTypes = module.GetTypes()
                     .Where(t => t.CustomAttributes.Any(attr => attr.AttributeType.Resolve() == attrRef))
                     .ToList();
@@ -79,7 +79,7 @@ namespace Modules.Extensions.Prototypes.Editor
             var genericType = new GenericInstanceType(baseClass);
             genericType.GenericArguments.Add(module.ImportReference(componentType));
 
-            var attrType = module.ImportReference(typeof(SerializedComponentAttribute)).Resolve();
+            var attrType = module.ImportReference(typeof(PrototypeAttribute)).Resolve();
             var attr = componentType.CustomAttributes.First(a => a.AttributeType.Resolve() == attrType);
             var name = attr.ConstructorArguments[0].Value as string;
             var newType = new TypeDefinition(

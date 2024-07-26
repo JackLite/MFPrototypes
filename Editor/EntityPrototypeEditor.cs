@@ -55,7 +55,7 @@ namespace Modules.Extensions.Prototypes.Editor
             var serializedTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .Where(asm => _assemblyFilter.Filter(asm))
                 .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => t.GetCustomAttribute<SerializedComponentAttribute>() != null);
+                .Where(t => t.GetCustomAttribute<PrototypeAttribute>() != null);
 
             var window = ScriptableObject.CreateInstance<AddComponentPopup>();
             window.OnAddClicked += (type) => AddComponent(property, type);
