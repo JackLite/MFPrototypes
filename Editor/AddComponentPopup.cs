@@ -17,7 +17,9 @@ namespace Modules.Extensions.Prototypes.Editor
         {
             var styles = Resources.Load<StyleSheet>("ModulesPrototypesUSS");
             rootVisualElement.styleSheets.Add(styles);
-            rootVisualElement.AddToClassList("modules-proto--add-component-modal");
+            var scrollView = new ScrollView();
+            scrollView.AddToClassList("modules-proto--add-component-modal");
+            rootVisualElement.Add(scrollView);
             foreach (var serializedType in serializedTypes.OrderBy(GetSerializedName))
             {
                 var container = new VisualElement();
@@ -35,7 +37,7 @@ namespace Modules.Extensions.Prototypes.Editor
                     OnAddClicked?.Invoke(serializedType);
                 };
                 container.Add(btn);
-                rootVisualElement.Add(container);
+                scrollView.Add(container);
             }
 
             ShowAuxWindow();

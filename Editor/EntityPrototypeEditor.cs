@@ -21,11 +21,12 @@ namespace Modules.Extensions.Prototypes.Editor
             var root = new VisualElement();
             var styles = Resources.Load<StyleSheet>("ModulesPrototypesUSS");
             root.styleSheets.Add(styles);
+            root.AddToClassList("modules-proto--inspector");
 
             _componentsContainer = new VisualElement();
             _componentsContainer.AddToClassList("modules-proto--components-container");
 
-            var title = new Label("Entity prototype");
+            var title = new Label(property.displayName);
             title.AddToClassList("modules-proto--prototype-title");
             root.Add(title);
 
@@ -40,7 +41,7 @@ namespace Modules.Extensions.Prototypes.Editor
         private void DrawAddComponent(SerializedProperty property, VisualElement root)
         {
             var btn = new Button();
-            btn.text = "Add component";
+            btn.text = "Add proto-component";
             btn.clicked += () =>
             {
                 ShowAddComponentModal(property);
