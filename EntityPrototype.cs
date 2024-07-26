@@ -22,6 +22,13 @@ namespace Modules.Extensions.Prototypes
         public Entity Create(DataWorld world)
         {
             var ent = world.NewEntity();
+            FillEntity(ent);
+
+            return ent;
+        }
+
+        public void FillEntity(Entity ent)
+        {
             foreach (var monoComponent in components)
             {
                 if (monoComponent == null)
@@ -32,8 +39,6 @@ namespace Modules.Extensions.Prototypes
                 else
                     monoComponent.Add(ent);
             }
-
-            return ent;
         }
 
         public void OnBeforeSerialize()
