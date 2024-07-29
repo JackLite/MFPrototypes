@@ -14,8 +14,7 @@ namespace Modules.Extensions.Prototypes.Editor
             PostProcessorCompilation.ForceUpdateAssemblies();
             Debug.Log("Modules prototypes preprocessing finished");
             Debug.Log("Modules prototypes refresh assets");
-            AssetDatabase.Refresh();
-            AssetDatabase.SaveAssets();
+            AssetDatabase.ForceReserializeAssets();
             Debug.Log("Modules prototypes refresh assets finished");
         }
     }
