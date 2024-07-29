@@ -1,4 +1,5 @@
-﻿using UnityEditor.Build;
+﻿using UnityEditor;
+using UnityEditor.Build;
 using UnityEngine;
 
 namespace Modules.Extensions.Prototypes.Editor
@@ -12,6 +13,10 @@ namespace Modules.Extensions.Prototypes.Editor
             Debug.Log("Modules prototypes preprocessing started");
             PostProcessorCompilation.ForceUpdateAssemblies();
             Debug.Log("Modules prototypes preprocessing finished");
+            Debug.Log("Modules prototypes refresh assets");
+            AssetDatabase.Refresh();
+            AssetDatabase.SaveAssets();
+            Debug.Log("Modules prototypes refresh assets finished");
         }
     }
 }
