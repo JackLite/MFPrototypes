@@ -20,7 +20,8 @@ namespace Modules.Extensions.Prototypes.Editor
             SessionState.SetBool("ModulesProto.IsCompiledOnce", true);
         }
 
-        private static void ForceUpdateAssemblies()
+        [MenuItem("Modules/Force update prototypes")]
+        public static void ForceUpdateAssemblies()
         {
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
             foreach (var assembly in assemblies)
