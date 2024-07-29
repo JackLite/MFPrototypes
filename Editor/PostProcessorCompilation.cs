@@ -14,7 +14,28 @@ namespace Modules.Extensions.Prototypes.Editor
     {
         static PostProcessorCompilation()
         {
+            if (!SessionState.GetBool("ModulesProto.IsCompiledOnce", false))
+                ForceUpdateAssemblies();
             CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
+            SessionState.SetBool("ModulesProto.IsCompiledOnce", true);
+        }
+
+        private static void ForceUpdateAssemblies()
+        {
+            var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
+            foreach (var assembly in assemblies)
+            {
+                var assemblyName = assembly.name;
+                if (assemblyName.StartsWith("Unity.") || assemblyName.StartsWith("UnityEngine"))
+                    continue;
+
+                if (assemblyName.StartsWith("ModulesFramework.") || assemblyName.StartsWith("Modules.Extensions."))
+                    continue;
+
+                CreateComponentsWrappers(assembly.outputPath);
+            }
+
+            CompilationPipeline.RequestScriptCompilation();
         }
 
         private static void OnCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)
@@ -74,17 +95,21 @@ namespace Modules.Extensions.Prototypes.Editor
 
         private static void CreateWrapper(ModuleDefinition module, TypeDefinition componentType)
         {
+            var attrType = module.ImportReference(typeof(PrototypeAttribute)).Resolve();
+            var attr = componentType.CustomAttributes.First(a => a.AttributeType.Resolve() == attrType);
+            var componentName = attr.ConstructorArguments[0].Value as string;
+            var typeName = $"ComponentWrapper_{componentName}";
+            const string ns = "Modules.Extensions.Prototypes.Generated";
+            if (module.GetType(ns, typeName) != null)
+                return;
+
             var baseClass = module.ImportReference(typeof(MonoComponent<>));
 
             var genericType = new GenericInstanceType(baseClass);
             genericType.GenericArguments.Add(module.ImportReference(componentType));
-
-            var attrType = module.ImportReference(typeof(PrototypeAttribute)).Resolve();
-            var attr = componentType.CustomAttributes.First(a => a.AttributeType.Resolve() == attrType);
-            var name = attr.ConstructorArguments[0].Value as string;
             var newType = new TypeDefinition(
-                "Modules.Extensions.Prototypes.Generated",
-                $"ComponentWrapper_{name}",
+                ns,
+                typeName,
                 TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Serializable,
                 genericType
             );
