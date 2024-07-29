@@ -120,7 +120,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 var innerComponent = element.FindPropertyRelative("component");
                 var componentType = (element.managedReferenceValue as MonoComponent).ComponentType;
 
-                if (innerComponent.hasChildren)
+                if (innerComponent != null && innerComponent.hasChildren)
                 {
                     var componentField = new PropertyField(innerComponent);
                     componentField.label = componentType.Name;
