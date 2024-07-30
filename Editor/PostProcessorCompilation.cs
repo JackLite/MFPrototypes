@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Pdb;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace Modules.Extensions.Prototypes.Editor
         [MenuItem("Modules/Force update prototypes")]
         public static void ForceUpdateAssemblies()
         {
-            Debug.Log("Force update assemblies");
+            Debug.Log("[Modules.Proto] Force update assemblies");
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
             foreach (var assembly in assemblies)
             {
@@ -37,7 +38,16 @@ namespace Modules.Extensions.Prototypes.Editor
                 CreateComponentsWrappers(assembly.outputPath);
             }
 
-            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.CleanBuildCache);
+            EditorApplication.UnlockReloadAssemblies();
+            if (Application.isBatchMode)
+            {
+                Directory.CreateDirectory("Assets/__ModulesProto__");
+                File.WriteAllText("Assets/__ModulesProto__/Test.cs", "public class __ModulesProtoHack__ { }");
+            }
+            else
+            {
+                EditorUtility.RequestScriptReload();
+            }
         }
 
         private static void OnCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)
@@ -57,7 +67,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
         private static void CreateComponentsWrappers(string assemblyPath)
         {
-            Debug.Log("Create wrappers for " + assemblyPath);
+            Debug.Log("[Modules.Proto] Create wrappers for " + assemblyPath);
 
             AssemblyDefinition assembly;
             var mutex = new Mutex();
@@ -71,7 +81,8 @@ namespace Modules.Extensions.Prototypes.Editor
                     ReadWrite = true,
                     AssemblyResolver = new AssemblyResolver(assemblyPath),
                     ReadSymbols = true,
-                    ReadingMode = ReadingMode.Immediate
+                    ReadingMode = ReadingMode.Immediate,
+                    SymbolReaderProvider = new PdbReaderProvider()
                 });
 
                 var module = assembly.MainModule;
@@ -88,12 +99,13 @@ namespace Modules.Extensions.Prototypes.Editor
 
                 assembly.Write(new WriterParameters
                 {
-                    WriteSymbols = true
+                    WriteSymbols = true,
+                    SymbolWriterProvider = new PdbWriterProvider()
                 });
             }
             catch (IOException e)
             {
-                Debug.LogWarning("Failed to read assembly: " + assemblyPath + "\n\r Exception: " + e);
+                Debug.LogWarning("[Modules.Proto] Failed to read assembly: " + assemblyPath + "\n\r Exception: " + e);
                 return;
             }
             finally
