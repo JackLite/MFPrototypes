@@ -23,6 +23,7 @@ namespace Modules.Extensions.Prototypes.Editor
         [MenuItem("Modules/Force update prototypes")]
         public static void ForceUpdateAssemblies()
         {
+            Debug.Log("Force update assemblies");
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
             foreach (var assembly in assemblies)
             {
@@ -36,7 +37,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 CreateComponentsWrappers(assembly.outputPath);
             }
 
-            CompilationPipeline.RequestScriptCompilation();
+            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.CleanBuildCache);
         }
 
         private static void OnCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)
@@ -44,11 +45,20 @@ namespace Modules.Extensions.Prototypes.Editor
             if (compilerMessages.Any(c => c.type == CompilerMessageType.Error))
                 return;
 
+            var assemblyName = Path.GetFileName(assemblyPath);
+            if (assemblyName.StartsWith("Unity.") || assemblyName.StartsWith("UnityEngine"))
+                return;
+
+            if (assemblyName.StartsWith("ModulesFramework.") || assemblyName.StartsWith("Modules.Extensions."))
+                return;
+
             CreateComponentsWrappers(assemblyPath);
         }
 
         private static void CreateComponentsWrappers(string assemblyPath)
         {
+            Debug.Log("Create wrappers for " + assemblyPath);
+
             AssemblyDefinition assembly;
             var mutex = new Mutex();
             try

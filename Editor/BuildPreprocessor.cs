@@ -10,12 +10,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
         public override void PrepareForBuild(BuildPlayerContext buildPlayerContext)
         {
-            Debug.Log("Modules prototypes preprocessing started");
-            PostProcessorCompilation.ForceUpdateAssemblies();
-            Debug.Log("Modules prototypes preprocessing finished");
-            Debug.Log("Modules prototypes refresh assets");
-            AssetDatabase.ForceReserializeAssets();
-            Debug.Log("Modules prototypes refresh assets finished");
+
         }
     }
 }
