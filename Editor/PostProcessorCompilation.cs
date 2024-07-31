@@ -13,15 +13,34 @@ namespace Modules.Extensions.Prototypes.Editor
     [InitializeOnLoad]
     public static class PostProcessorCompilation
     {
+        private const string CompileHackFile = "Assets/__ModulesProto__/ModulesProtoHack.cs";
+        private const string CacheLibraryFile = "Library/_ModulesFramework";
+        private const string LibraryDir = "Library";
         static PostProcessorCompilation()
         {
-            if (!SessionState.GetBool("ModulesProto.IsCompiledOnce", false))
+            var hackDir = Path.GetDirectoryName(CompileHackFile);
+            if (Directory.Exists(hackDir))
+            {
+                Directory.Delete(hackDir, true);
+                File.Delete($"{hackDir}.meta");
+            }
+
+            if (!File.Exists(CacheLibraryFile))
+            {
+                Debug.Log("[Modules.Proto] There's no prototypes cache. Force update assemblies.");
                 ForceUpdateAssemblies();
+                if (!Directory.Exists(LibraryDir))
+                    Directory.CreateDirectory(LibraryDir);
+                File.WriteAllText(CacheLibraryFile, "");
+                if (!Directory.Exists(hackDir))
+                    Directory.CreateDirectory(hackDir);
+                File.WriteAllText(CompileHackFile, "internal static class __ModulesProtoHack__ { }");
+            }
+
             CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
-            SessionState.SetBool("ModulesProto.IsCompiledOnce", true);
         }
 
-        [MenuItem("Modules/Force update prototypes")]
+        [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
         public static void ForceUpdateAssemblies()
         {
             Debug.Log("[Modules.Proto] Force update assemblies");
@@ -39,15 +58,6 @@ namespace Modules.Extensions.Prototypes.Editor
             }
 
             EditorApplication.UnlockReloadAssemblies();
-            if (Application.isBatchMode)
-            {
-                Directory.CreateDirectory("Assets/__ModulesProto__");
-                File.WriteAllText("Assets/__ModulesProto__/Test.cs", "public class __ModulesProtoHack__ { }");
-            }
-            else
-            {
-                EditorUtility.RequestScriptReload();
-            }
         }
 
         private static void OnCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)
