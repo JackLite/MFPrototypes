@@ -14,12 +14,12 @@ namespace Modules.Extensions.Prototypes
 
         private HashSet<Type> _multipleTypes = new();
 
-        public Entity Create()
+        public virtual Entity Create()
         {
             return Create(ModulesFramework.MF.World);
         }
 
-        public Entity Create(DataWorld world)
+        public virtual Entity Create(DataWorld world)
         {
             var ent = world.NewEntity();
             FillEntity(ent);
@@ -27,7 +27,7 @@ namespace Modules.Extensions.Prototypes
             return ent;
         }
 
-        public void FillEntity(Entity ent)
+        public virtual void FillEntity(Entity ent)
         {
             foreach (var monoComponent in components)
             {
@@ -41,12 +41,12 @@ namespace Modules.Extensions.Prototypes
             }
         }
 
-        public void OnBeforeSerialize()
+        public virtual void OnBeforeSerialize()
         {
             components.RemoveAll(c => c == null);
         }
 
-        public void OnAfterDeserialize()
+        public virtual void OnAfterDeserialize()
         {
             _multipleTypes.Clear();
             components.RemoveAll(c => c == null);
