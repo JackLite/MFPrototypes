@@ -13,16 +13,18 @@ namespace Modules.Extensions.Prototypes.Editor
     [InitializeOnLoad]
     public static class PostProcessorCompilation
     {
-        private const string CompileHackFile = "Assets/__ModulesProto__/ModulesProtoHack.cs";
+        private const string CompileHackFile = CompileHackDirectory + "/ModulesProtoHack.cs";
         private const string CacheLibraryFile = "Library/_ModulesFramework";
-        private const string LibraryDir = "Library";
+        public const string CompileHackDirectory = "Assets/__ModulesProto__";
+        public const string CacheBuildFile = "Library/_ModulesFramework.build";
+        public const string LibraryDir = "Library";
+
         static PostProcessorCompilation()
         {
-            var hackDir = Path.GetDirectoryName(CompileHackFile);
-            if (Directory.Exists(hackDir))
+            if (Directory.Exists(CompileHackDirectory) && !File.Exists(CacheBuildFile))
             {
-                Directory.Delete(hackDir, true);
-                File.Delete($"{hackDir}.meta");
+                Directory.Delete(CompileHackDirectory, true);
+                File.Delete($"{CompileHackDirectory}.meta");
             }
 
             if (!File.Exists(CacheLibraryFile))
@@ -32,8 +34,8 @@ namespace Modules.Extensions.Prototypes.Editor
                 if (!Directory.Exists(LibraryDir))
                     Directory.CreateDirectory(LibraryDir);
                 File.WriteAllText(CacheLibraryFile, "");
-                if (!Directory.Exists(hackDir))
-                    Directory.CreateDirectory(hackDir);
+                if (!Directory.Exists(CompileHackDirectory))
+                    Directory.CreateDirectory(CompileHackDirectory);
                 File.WriteAllText(CompileHackFile, "internal static class __ModulesProtoHack__ { }");
             }
 

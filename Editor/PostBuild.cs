@@ -17,8 +17,8 @@ namespace Modules.Extensions.Prototypes.Editor
 
         private static void RemoveTempClass()
         {
-            Directory.Delete("Assets/__ModulesProto__/", true);
-            File.Delete("Assets/__ModulesProto__.meta");
+            Directory.Delete(PostProcessorCompilation.CompileHackDirectory, true);
+            File.Delete($"{PostProcessorCompilation.CompileHackDirectory}.meta");
         }
     }
 }
