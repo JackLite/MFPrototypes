@@ -16,27 +16,36 @@ namespace Modules.Extensions.Prototypes.Editor
         private const string CompileHackFile = CompileHackDirectory + "/ModulesProtoHack.cs";
         private const string CacheLibraryFile = "Library/_ModulesFramework";
         public const string CompileHackDirectory = "Assets/__ModulesProto__";
-        public const string CacheBuildFile = "Library/_ModulesFramework.build";
         public const string LibraryDir = "Library";
 
         static PostProcessorCompilation()
         {
-            if (Directory.Exists(CompileHackDirectory) && !File.Exists(CacheBuildFile))
+            if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
             {
+                Debug.Log("[Modules.Proto] Delete temp hack file");
                 Directory.Delete(CompileHackDirectory, true);
                 File.Delete($"{CompileHackDirectory}.meta");
             }
 
-            if (!File.Exists(CacheLibraryFile))
+            var isCacheLibraryExists = !File.Exists(CacheLibraryFile);
+            if (isCacheLibraryExists || Application.isBatchMode)
             {
-                Debug.Log("[Modules.Proto] There's no prototypes cache. Force update assemblies.");
-                ForceUpdateAssemblies();
-                if (!Directory.Exists(LibraryDir))
-                    Directory.CreateDirectory(LibraryDir);
-                File.WriteAllText(CacheLibraryFile, "");
-                if (!Directory.Exists(CompileHackDirectory))
-                    Directory.CreateDirectory(CompileHackDirectory);
-                File.WriteAllText(CompileHackFile, "internal static class __ModulesProtoHack__ { }");
+                if (isCacheLibraryExists)
+                {
+                    Debug.Log("[Modules.Proto] There's no prototypes cache. Force update assemblies.");
+                    ForceUpdateAssemblies();
+                    if (!Directory.Exists(LibraryDir))
+                        Directory.CreateDirectory(LibraryDir);
+                    File.WriteAllText(CacheLibraryFile, "");
+                }
+
+                if (!File.Exists(CompileHackFile))
+                {
+                    Debug.Log("[Modules.Proto] Create temp hack file");
+                    if (!Directory.Exists(CompileHackDirectory))
+                        Directory.CreateDirectory(CompileHackDirectory);
+                    File.WriteAllText(CompileHackFile, "internal static class __ModulesProtoHack__ { }");
+                }
             }
 
             CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
@@ -45,6 +54,7 @@ namespace Modules.Extensions.Prototypes.Editor
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
         public static void ForceUpdateAssemblies()
         {
+            EditorApplication.LockReloadAssemblies();
             Debug.Log("[Modules.Proto] Force update assemblies");
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
             foreach (var assembly in assemblies)
