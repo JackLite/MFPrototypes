@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using Mono.Cecil;
@@ -20,35 +21,32 @@ namespace Modules.Extensions.Prototypes.Editor
 
         static PostProcessorCompilation()
         {
-            if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
+            // if we have cache file - only check hack file
+            var isProtoCacheExists = File.Exists(CacheLibraryFile);
+            if (isProtoCacheExists)
             {
-                Debug.Log("[Modules.Proto] Delete temp hack file");
-                Directory.Delete(CompileHackDirectory, true);
-                File.Delete($"{CompileHackDirectory}.meta");
-            }
-
-            var isCacheLibraryExists = !File.Exists(CacheLibraryFile);
-            if (isCacheLibraryExists || Application.isBatchMode)
-            {
-                if (isCacheLibraryExists)
+                if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
                 {
-                    Debug.Log("[Modules.Proto] There's no prototypes cache. Force update assemblies.");
-                    ForceUpdateAssemblies();
-                    if (!Directory.Exists(LibraryDir))
-                        Directory.CreateDirectory(LibraryDir);
-                    File.WriteAllText(CacheLibraryFile, "");
+                    Debug.Log("[Modules.Proto] Delete temp hack file");
+                    Directory.Delete(CompileHackDirectory, true);
+                    File.Delete($"{CompileHackDirectory}.meta");
                 }
 
-                if (!File.Exists(CompileHackFile))
-                {
-                    Debug.Log("[Modules.Proto] Create temp hack file");
-                    if (!Directory.Exists(CompileHackDirectory))
-                        Directory.CreateDirectory(CompileHackDirectory);
-                    File.WriteAllText(CompileHackFile, "internal static class __ModulesProtoHack__ { }");
-                }
+                CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
+                return;
             }
 
-            CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
+            Debug.Log("[Modules.Proto] There's no prototypes cache. Force update assemblies.");
+            ForceUpdateAssemblies();
+            if (!Directory.Exists(LibraryDir))
+                Directory.CreateDirectory(LibraryDir);
+            File.WriteAllText(CacheLibraryFile, "");
+
+            Debug.Log("[Modules.Proto] Create temp hack file");
+            if (!Directory.Exists(CompileHackDirectory))
+                Directory.CreateDirectory(CompileHackDirectory);
+            var timestamp = (long)(DateTime.Now - DateTime.UnixEpoch).TotalSeconds;
+            File.WriteAllText(CompileHackFile, $"internal static class __ModulesProtoHack__{timestamp} {{}}");
         }
 
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
