@@ -16,6 +16,26 @@ namespace Modules.Extensions.Prototypes.Editor
         private readonly UnityAssemblyFilter _assemblyFilter = new();
         private VisualElement _componentsContainer;
 
+        #if !UNITY_2022_1_OR_NEWER
+        private EntityPrototypeIMGUI _entityPrototypeIMGUI;
+
+        public EntityPrototypeEditor()
+        {
+            _entityPrototypeIMGUI = new EntityPrototypeIMGUI(this);
+        }
+
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            _entityPrototypeIMGUI.Draw(position, property, label);
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return _entityPrototypeIMGUI.GetHeight(property);
+        }
+        #endif
+
+        // N.B. This works only if the inspector is fully based on UIToolkit that is wrong until the Unity 2022 version
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             SerializationUtility.ClearAllManagedReferencesWithMissingTypes(property.serializedObject.targetObject);
@@ -63,7 +83,7 @@ namespace Modules.Extensions.Prototypes.Editor
             root.Add(btn);
         }
 
-        private void ShowAddComponentModal(SerializedProperty property)
+        internal void ShowAddComponentModal(SerializedProperty property)
         {
             var serializedTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .Where(asm => _assemblyFilter.Filter(asm))
@@ -98,7 +118,9 @@ namespace Modules.Extensions.Prototypes.Editor
                 break;
             }
 
+            #if UNITY_2022_1_OR_NEWER
             DrawComponents(property);
+            #endif
         }
 
         private void DrawComponents(SerializedProperty property)
@@ -111,11 +133,11 @@ namespace Modules.Extensions.Prototypes.Editor
                 var propertyContainer = new ComponentContainer();
                 propertyContainer.AddToClassList("modules-proto--property-container");
                 var element = componentsProp.GetArrayElementAtIndex(index);
-                if (element.boxedValue == null)
-                {
-                    componentsProp.DeleteArrayElementAtIndex(index);
-                    continue;
-                }
+                // if (element.managedReferenceValue == null)
+                // {
+                //     componentsProp.DeleteArrayElementAtIndex(index);
+                //     continue;
+                // }
 
                 var innerComponent = element.FindPropertyRelative("component");
                 var componentType = (element.managedReferenceValue as MonoComponent).ComponentType;
@@ -162,7 +184,7 @@ namespace Modules.Extensions.Prototypes.Editor
             return btn;
         }
 
-        private void RemoveWrapper(SerializedProperty property, int index)
+        internal void RemoveWrapper(SerializedProperty property, int index)
         {
             var componentsProp = property.FindPropertyRelative(nameof(EntityPrototype.components));
             componentsProp.DeleteArrayElementAtIndex(index);
