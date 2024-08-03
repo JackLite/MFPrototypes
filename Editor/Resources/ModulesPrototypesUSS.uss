@@ -29,6 +29,10 @@
     flex-wrap: wrap;
 }
 
+.modules-proto--add-component--container:hover {
+    background-color: #353535;
+}
+
 .modules-proto--add-component--container > Button {
     width: 150px;
     height: 24px;
@@ -54,21 +58,24 @@
 }
 
 .modules-proto--components-container {
-    margin-left: 12px;
-    margin-right: 12px;
     margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .modules-proto--property-container {
     flex-direction: row;
     align-items: flex-start;
     justify-content: flex-start;
-    margin-bottom: 10px;
+    padding: 5px 12px;
 }
 
 .modules-proto--property-container > PropertyField {
     flex-grow: 1;
     margin-right: 30px;
+}
+
+.modules-proto--property-container:hover {
+    background-color: #333333;
 }
 
 .modules-proto--property-container > Label {
