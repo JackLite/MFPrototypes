@@ -4,8 +4,7 @@ using UnityEngine;
 namespace Modules.Extensions.Prototypes
 {
     /// <summary>
-    ///     Simple container for entity so we can get it
-    ///     It useful when we use physics and do not want create chains
+    ///     Simple container for entity so we can get it or destroy with the GameObject
     /// </summary>
     public class EntityProvider : MonoBehaviour
     {

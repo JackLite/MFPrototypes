@@ -17,6 +17,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
         public void Show(IEnumerable<Type> serializedTypes)
         {
+            titleContent = new GUIContent("Add proto-component");
             var styles = Resources.Load<StyleSheet>("ModulesPrototypesUSS");
             rootVisualElement.styleSheets.Add(styles);
 
