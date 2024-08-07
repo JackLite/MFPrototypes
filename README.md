@@ -44,7 +44,7 @@ If you add several components, they will be added like a multiple components.
 
 You can assign any values like the usual MonoBehaviour component including links to GameObjects and ScriptableObjects.
 
-After it you can several options:
+After you have several options:
 
 ```csharp
 [SerializeField]
