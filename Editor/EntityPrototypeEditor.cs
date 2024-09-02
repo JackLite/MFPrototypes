@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Modules.Extensions.Prototypes.Editor.AddingComponents;
 using ModulesFrameworkUnity.Utils;
 using UnityEditor;
 using UnityEditor.UIElements;

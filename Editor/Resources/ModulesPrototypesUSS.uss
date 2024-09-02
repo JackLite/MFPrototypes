@@ -18,6 +18,22 @@
     padding-right: 6px;
 }
 
+AddComponentCategoryView {
+    margin-top: 10px;
+    margin-left: 12px;
+}
+
+AddComponentOneCategory {
+    font-size: 15px;
+}
+
+AddComponentCategoryView > AddComponentOneCategory {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-bottom-width: 1px;
+    border-bottom-color: #222222;
+}
+
 .modules-proto--add-component--container {
     flex-direction: row;
     padding-left: 6px;
