@@ -2,7 +2,6 @@
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
-using UnityEngine.Device;
 
 namespace Modules.Extensions.Prototypes.Editor
 {
