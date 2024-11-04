@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
@@ -19,6 +21,8 @@ namespace Modules.Extensions.Prototypes.Editor
         public const string CompileHackDirectory = "Assets/__ModulesProto__";
         public const string LibraryDir = "Library";
 
+        private static readonly List<string> _assembliesPath = new();
+
         static PostProcessorCompilation()
         {
             // if we have cache file - only check hack file
@@ -32,7 +36,8 @@ namespace Modules.Extensions.Prototypes.Editor
                     File.Delete($"{CompileHackDirectory}.meta");
                 }
 
-                CompilationPipeline.assemblyCompilationFinished += OnCompilationFinished;
+                CompilationPipeline.compilationFinished += OnCompilationFinished;
+                CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
                 return;
             }
 
@@ -70,10 +75,27 @@ namespace Modules.Extensions.Prototypes.Editor
             EditorApplication.UnlockReloadAssemblies();
         }
 
-        private static void OnCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)
+        private static void OnCompilationFinished(object obj)
+        {
+            if (_assembliesPath.Count == 0)
+                return;
+            CompilationPipeline.compilationFinished += TestM;
+            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
+        }
+
+        private static void TestM(object obj)
+        {
+            _assembliesPath.RemoveAll(CreateComponentsWrappers);
+            CompilationPipeline.compilationFinished -= TestM;
+        }
+
+        private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)
         {
             if (compilerMessages.Any(c => c.type == CompilerMessageType.Error))
+            {
+                _assembliesPath.Clear();
                 return;
+            }
 
             var assemblyName = Path.GetFileName(assemblyPath);
             if (assemblyName.StartsWith("Unity.") || assemblyName.StartsWith("UnityEngine"))
@@ -82,20 +104,19 @@ namespace Modules.Extensions.Prototypes.Editor
             if (assemblyName.StartsWith("ModulesFramework.") || assemblyName.StartsWith("Modules.Extensions."))
                 return;
 
-            CreateComponentsWrappers(assemblyPath);
+            _assembliesPath.Add(assemblyPath);
         }
 
-        private static void CreateComponentsWrappers(string assemblyPath)
+        private static bool CreateComponentsWrappers(string assemblyPath)
         {
-            Debug.Log("[Modules.Proto] Create wrappers for " + assemblyPath);
-
             AssemblyDefinition assembly;
             var mutex = new Mutex();
             try
             {
                 mutex.WaitOne();
+
                 using var fileStream =
-                    new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                    new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
                 assembly = AssemblyDefinition.ReadAssembly(fileStream, new ReaderParameters(ReadingMode.Immediate)
                 {
                     ReadWrite = true,
@@ -122,11 +143,19 @@ namespace Modules.Extensions.Prototypes.Editor
                     WriteSymbols = true,
                     SymbolWriterProvider = new PdbWriterProvider()
                 });
+                Debug.Log("[Modules.Proto] Created wrappers for " + assemblyPath);
+                return true;
             }
             catch (IOException e)
             {
+                Debug.LogWarning("[Modules.Proto] Failed to read assembly: " + assemblyPath + ". " +
+                                 "There will be another attempt\n\r Exception: " + e);
+                return false;
+            }
+            catch (Exception e)
+            {
                 Debug.LogWarning("[Modules.Proto] Failed to read assembly: " + assemblyPath + "\n\r Exception: " + e);
-                return;
+                return true;
             }
             finally
             {
