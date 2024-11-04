@@ -45,6 +45,11 @@ namespace Modules.Extensions.Prototypes.Editor
             root.styleSheets.Add(styles);
             root.AddToClassList("modules-proto--inspector");
 
+            var customIdField = new PropertyField(property.FindPropertyRelative(nameof(EntityPrototype.customId)));
+            customIdField.AddToClassList("modules-proto--custom-id");
+            root.Add(customIdField);
+            DrawAdditional(property, root);
+
             _componentsContainer = new VisualElement();
             _componentsContainer.AddToClassList("modules-proto--components-container");
 
@@ -55,6 +60,11 @@ namespace Modules.Extensions.Prototypes.Editor
 
             return root;
         }
+
+        /// <summary>
+        ///     Override this method to add additional fields before the components list
+        /// </summary>
+        protected virtual void DrawAdditional(SerializedProperty property, VisualElement root) { }
 
         private Foldout CreateRoot(SerializedProperty property)
         {

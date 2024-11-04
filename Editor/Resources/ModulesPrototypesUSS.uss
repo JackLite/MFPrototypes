@@ -34,6 +34,10 @@ AddComponentCategoryView > AddComponentOneCategory {
     border-bottom-color: #222222;
 }
 
+.modules-proto--custom-id Label {
+    font-size: 14px;
+}
+
 .modules-proto--add-component--container {
     flex-direction: row;
     padding-left: 6px;

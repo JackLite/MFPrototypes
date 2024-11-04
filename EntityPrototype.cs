@@ -9,6 +9,8 @@ namespace Modules.Extensions.Prototypes
     [Serializable]
     public class EntityPrototype : ISerializationCallbackReceiver
     {
+        public string customId = string.Empty;
+
         [SerializeReference]
         public List<MonoComponent> components = new();
 
@@ -23,8 +25,16 @@ namespace Modules.Extensions.Prototypes
         {
             var ent = world.NewEntity();
             FillEntity(ent);
+            if (!string.IsNullOrWhiteSpace(customId))
+                ent.SetCustomId(customId);
 
             return ent;
+        }
+
+        public virtual void FillCustomId(Entity ent)
+        {
+            if (!string.IsNullOrWhiteSpace(customId))
+                ent.SetCustomId(customId);
         }
 
         public virtual void FillEntity(Entity ent)
@@ -38,6 +48,39 @@ namespace Modules.Extensions.Prototypes
                     monoComponent.AddMultiple(ent);
                 else
                     monoComponent.Add(ent);
+            }
+        }
+
+        public virtual bool HasPrototypeFor<T>()
+        {
+            return components.Any(c => c.ComponentType == typeof(T));
+        }
+
+        public virtual T GetPrototypeComponent<T>() where T : struct
+        {
+            if (_multipleTypes.Contains(typeof(T)))
+                throw new Exception($"Type {typeof(T).Name} is multiple. Use ");
+            foreach (var wrapper in components)
+            {
+                if (wrapper.ComponentType == typeof(T))
+                {
+                    return ((MonoComponent<T>)wrapper).component;
+                }
+            }
+
+            return default;
+        }
+
+        public virtual IEnumerable<T> GetPrototypeMultipleComponents<T>() where T : struct
+        {
+            if (!_multipleTypes.Contains(typeof(T)))
+                throw new Exception($"Type {typeof(T).Name} is multiple. Use ");
+            foreach (var wrapper in components)
+            {
+                if (wrapper.ComponentType == typeof(T))
+                {
+                    yield return ((MonoComponent<T>)wrapper).component;
+                }
             }
         }
 
