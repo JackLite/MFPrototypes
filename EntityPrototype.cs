@@ -101,5 +101,9 @@ namespace Modules.Extensions.Prototypes
                 _multipleTypes.Add(type);
             }
         }
+
+        public void OnBeforeSerialize()
+        {
+        }
     }
 }
