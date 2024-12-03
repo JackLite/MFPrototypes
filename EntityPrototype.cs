@@ -84,15 +84,9 @@ namespace Modules.Extensions.Prototypes
             }
         }
 
-        public virtual void OnBeforeSerialize()
-        {
-            components.RemoveAll(c => c == null);
-        }
-
         public virtual void OnAfterDeserialize()
         {
             _multipleTypes.Clear();
-            components.RemoveAll(c => c == null);
             var counter = new Dictionary<Type, int>();
             foreach (var component in components)
             {
