@@ -1,8 +1,10 @@
-﻿using System;
+﻿using ModulesFramework.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using ModulesFramework.Data;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Modules.Extensions.Prototypes
 {
@@ -84,6 +86,10 @@ namespace Modules.Extensions.Prototypes
             }
         }
 
+        public virtual void OnBeforeSerialize()
+        {
+        }
+
         public virtual void OnAfterDeserialize()
         {
             _multipleTypes.Clear();
@@ -100,10 +106,6 @@ namespace Modules.Extensions.Prototypes
             {
                 _multipleTypes.Add(type);
             }
-        }
-
-        public void OnBeforeSerialize()
-        {
         }
     }
 }

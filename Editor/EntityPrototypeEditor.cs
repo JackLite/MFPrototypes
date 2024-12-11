@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Modules.Extensions.Prototypes.Editor.AddingComponents;
+using ModulesFrameworkUnity.Utils;
+using System;
 using System.Linq;
 using System.Reflection;
-using Modules.Extensions.Prototypes.Editor.AddingComponents;
-using ModulesFrameworkUnity.Utils;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -17,7 +16,7 @@ namespace Modules.Extensions.Prototypes.Editor
         private readonly UnityAssemblyFilter _assemblyFilter = new();
         private VisualElement _componentsContainer;
 
-        #if !UNITY_2022_1_OR_NEWER
+#if !UNITY_2022_1_OR_NEWER
         private EntityPrototypeIMGUI _entityPrototypeIMGUI;
 
         public EntityPrototypeEditor()
@@ -34,7 +33,7 @@ namespace Modules.Extensions.Prototypes.Editor
         {
             return _entityPrototypeIMGUI.GetHeight(property);
         }
-        #endif
+#endif
 
         // N.B. This works only if the inspector is fully based on UIToolkit that is wrong until the Unity 2022 version
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
@@ -78,7 +77,44 @@ namespace Modules.Extensions.Prototypes.Editor
             });
             root.text = property.displayName;
             root.Q<Label>().AddToClassList("modules-proto--prototype-title");
+
+            var menuManipulator = new ContextualMenuManipulator(builder =>
+            {
+                builder.menu.AppendAction("Clear null refs", _ =>
+                {
+                    ClearNullRefs(property);
+                });
+            });
+            root.Q<Label>().AddManipulator(menuManipulator);
+
             return root;
+        }
+
+        private void ClearNullRefs(SerializedProperty property)
+        {
+            var componentsProp = property.FindPropertyRelative(nameof(EntityPrototype.components));
+            var deleted = false;
+            for (var index = 0; index < componentsProp.arraySize;)
+            {
+                var element = componentsProp.GetArrayElementAtIndex(index);
+                if (element.managedReferenceValue == null)
+                {
+                    componentsProp.DeleteArrayElementAtIndex(index);
+                    deleted = true;
+                    continue;
+                }
+
+                index++;
+            }
+
+            if (deleted)
+                property.serializedObject.ApplyModifiedProperties();
+
+            var target = property.serializedObject.targetObject;
+            deleted |= SerializationUtility.ClearAllManagedReferencesWithMissingTypes(target);
+
+            if (deleted)
+                EditorUtility.SetDirty(target);
         }
 
         private void DrawAddComponent(SerializedProperty property, VisualElement root)
@@ -129,9 +165,9 @@ namespace Modules.Extensions.Prototypes.Editor
                 break;
             }
 
-            #if UNITY_2022_1_OR_NEWER
+#if UNITY_2022_1_OR_NEWER
             DrawComponents(property);
-            #endif
+#endif
         }
 
         private void DrawComponents(SerializedProperty property)
@@ -139,16 +175,16 @@ namespace Modules.Extensions.Prototypes.Editor
             _componentsContainer.Clear();
             var componentsProp = property.FindPropertyRelative(nameof(EntityPrototype.components));
 
-            for (var index = 0; index < componentsProp.arraySize;)
+            for (var index = 0; index < componentsProp.arraySize; index++)
             {
                 var propertyContainer = new ComponentContainer();
                 propertyContainer.AddToClassList("modules-proto--property-container");
                 var element = componentsProp.GetArrayElementAtIndex(index);
-                // if (element.managedReferenceValue == null)
-                // {
-                //     componentsProp.DeleteArrayElementAtIndex(index);
-                //     continue;
-                // }
+                if (element.managedReferenceValue == null)
+                {
+                    Debug.LogWarning("[Modules.Proto] There is null reference in prototype. Use 'Clear null refs' from prototype context menu.");
+                    continue;
+                }
 
                 var innerComponent = element.FindPropertyRelative("component");
                 var componentType = (element.managedReferenceValue as MonoComponent).ComponentType;
@@ -170,7 +206,6 @@ namespace Modules.Extensions.Prototypes.Editor
 
                 var btn = CreateRemoveBtn(property, index);
                 propertyContainer.Add(btn);
-                index++;
                 _componentsContainer.Add(propertyContainer);
             }
 

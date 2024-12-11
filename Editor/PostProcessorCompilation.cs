@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Cecil.Pdb;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Pdb;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -55,7 +54,13 @@ namespace Modules.Extensions.Prototypes.Editor
         }
 
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
-        public static void ForceUpdateAssemblies()
+        public static void ForceUpdateFromMenu()
+        {
+            ForceUpdateAssemblies();
+            ReSerializeAssets();
+        }
+
+        private static void ForceUpdateAssemblies()
         {
             EditorApplication.LockReloadAssemblies();
             Debug.Log("[Modules.Proto] Force update assemblies");
@@ -73,6 +78,28 @@ namespace Modules.Extensions.Prototypes.Editor
             }
 
             EditorApplication.UnlockReloadAssemblies();
+            EditorUtility.RequestScriptReload();
+        }
+
+        private static void ReSerializeAssets()
+        {
+            Reserialize("t:ScriptableObject");
+            Reserialize("t:Prefab");
+            Reserialize("t:Scene");
+        }
+
+        private static void Reserialize(string filter)
+        {
+            var assets = AssetDatabase.FindAssets(filter);
+            var paths = new string[assets.Length];
+            for (var index = 0; index < assets.Length; index++)
+            {
+                var asset = assets[index];
+                var assetPath = AssetDatabase.GUIDToAssetPath(asset);
+                Debug.Log($"[Modules.Proto] Reserialize {assetPath}");
+                paths[index] = assetPath;
+            }
+            AssetDatabase.ForceReserializeAssets(paths);
         }
 
         private static void OnCompilationFinished(object obj)
