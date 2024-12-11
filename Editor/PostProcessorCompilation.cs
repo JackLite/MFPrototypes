@@ -57,7 +57,6 @@ namespace Modules.Extensions.Prototypes.Editor
         public static void ForceUpdateFromMenu()
         {
             ForceUpdateAssemblies();
-            ReSerializeAssets();
         }
 
         private static void ForceUpdateAssemblies()
@@ -79,27 +78,6 @@ namespace Modules.Extensions.Prototypes.Editor
 
             EditorApplication.UnlockReloadAssemblies();
             EditorUtility.RequestScriptReload();
-        }
-
-        private static void ReSerializeAssets()
-        {
-            Reserialize("t:ScriptableObject");
-            Reserialize("t:Prefab");
-            Reserialize("t:Scene");
-        }
-
-        private static void Reserialize(string filter)
-        {
-            var assets = AssetDatabase.FindAssets(filter);
-            var paths = new string[assets.Length];
-            for (var index = 0; index < assets.Length; index++)
-            {
-                var asset = assets[index];
-                var assetPath = AssetDatabase.GUIDToAssetPath(asset);
-                Debug.Log($"[Modules.Proto] Reserialize {assetPath}");
-                paths[index] = assetPath;
-            }
-            AssetDatabase.ForceReserializeAssets(paths);
         }
 
         private static void OnCompilationFinished(object obj)
