@@ -1,4 +1,4 @@
-﻿using Mono.Cecil;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
 using System;
@@ -16,36 +16,35 @@ namespace Modules.Extensions.Prototypes.Editor
     public static class PostProcessorCompilation
     {
         private const string CompileHackFile = CompileHackDirectory + "/ModulesProtoHack.cs";
-        private const string CacheLibraryFile = "Library/_ModulesFramework";
         public const string CompileHackDirectory = "Assets/__ModulesProto__";
-        public const string LibraryDir = "Library";
 
         private static readonly List<string> _assembliesPath = new();
 
         static PostProcessorCompilation()
         {
-            // if we have cache file - only check hack file
-            var isProtoCacheExists = File.Exists(CacheLibraryFile);
-            if (isProtoCacheExists)
+            CompilationPipeline.compilationFinished += OnCompilationFinished;
+            CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
+            // update prototypes when it's first time editor loads domain
+            if (!SessionState.GetBool("Modules.FirstEditorDomainLoad", false))
             {
-                if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
-                {
-                    Debug.Log("[Modules.Proto] Delete temp hack file");
-                    Directory.Delete(CompileHackDirectory, true);
-                    File.Delete($"{CompileHackDirectory}.meta");
-                }
-
-                CompilationPipeline.compilationFinished += OnCompilationFinished;
-                CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
+                SessionState.SetBool("Modules.FirstEditorDomainLoad", true);
+                Debug.Log("[Modules.Proto] Force update assemblies when editor starts.");
+                ForceUpdateAssemblies();
+                CreateHackFile();
                 return;
             }
 
-            Debug.Log("[Modules.Proto] There's no prototypes cache. Force update assemblies.");
-            ForceUpdateAssemblies();
-            if (!Directory.Exists(LibraryDir))
-                Directory.CreateDirectory(LibraryDir);
-            File.WriteAllText(CacheLibraryFile, "");
+            if (Directory.Exists(CompileHackDirectory))
+            {
+                Debug.Log("[Modules.Proto] Delete temp hack file");
+                Directory.Delete(CompileHackDirectory, true);
+                File.Delete($"{CompileHackDirectory}.meta");
+            }
 
+        }
+
+        private static void CreateHackFile()
+        {
             Debug.Log("[Modules.Proto] Create temp hack file");
             if (!Directory.Exists(CompileHackDirectory))
                 Directory.CreateDirectory(CompileHackDirectory);
@@ -53,16 +52,17 @@ namespace Modules.Extensions.Prototypes.Editor
             File.WriteAllText(CompileHackFile, $"internal static class __ModulesProtoHack__{timestamp} {{}}");
         }
 
+
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
         public static void ForceUpdateFromMenu()
         {
+            Debug.Log("[Modules.Proto] Force update assemblies");
             ForceUpdateAssemblies();
         }
 
         private static void ForceUpdateAssemblies()
         {
             EditorApplication.LockReloadAssemblies();
-            Debug.Log("[Modules.Proto] Force update assemblies");
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
             foreach (var assembly in assemblies)
             {
@@ -84,14 +84,14 @@ namespace Modules.Extensions.Prototypes.Editor
         {
             if (_assembliesPath.Count == 0)
                 return;
-            CompilationPipeline.compilationFinished += TestM;
+            CompilationPipeline.compilationFinished += AddPrototypes;
             CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
         }
 
-        private static void TestM(object obj)
+        private static void AddPrototypes(object _)
         {
             _assembliesPath.RemoveAll(CreateComponentsWrappers);
-            CompilationPipeline.compilationFinished -= TestM;
+            CompilationPipeline.compilationFinished -= AddPrototypes;
         }
 
         private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)

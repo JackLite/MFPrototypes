@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Modules.Extensions.Prototypes
 {
@@ -10,13 +10,13 @@ namespace Modules.Extensions.Prototypes
         public bool destroyEntityWithGameObject;
         public EntityPrototype prototype;
 
-        public void Start()
+        public virtual void Start()
         {
             if (createOnStart)
                 Create();
         }
 
-        public void Create()
+        public virtual void Create()
         {
             var ent = prototype.Create();
             if (createEntityProvider)

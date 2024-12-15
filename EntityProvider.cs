@@ -1,4 +1,4 @@
-﻿using ModulesFramework.Data;
+using ModulesFramework.Data;
 using UnityEngine;
 
 namespace Modules.Extensions.Prototypes
@@ -11,7 +11,7 @@ namespace Modules.Extensions.Prototypes
         public Entity entity;
         public bool destroyEntityWhenDestroyed;
 
-        private void OnDestroy()
+        protected virtual void OnDestroy()
         {
             if (destroyEntityWhenDestroyed && entity.IsAlive())
                 entity.Destroy();
