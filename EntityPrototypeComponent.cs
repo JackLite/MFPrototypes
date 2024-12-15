@@ -1,3 +1,4 @@
+using ModulesFramework.Data;
 using UnityEngine;
 
 namespace Modules.Extensions.Prototypes
@@ -5,9 +6,9 @@ namespace Modules.Extensions.Prototypes
     [DisallowMultipleComponent]
     public class EntityPrototypeComponent : MonoBehaviour
     {
-        public bool createOnStart;
+        public bool createOnStart = true;
         public bool createEntityProvider = true;
-        public bool destroyEntityWithGameObject;
+        public bool destroyEntityWithGameObject = true;
         public EntityPrototype prototype;
 
         public virtual void Start()
@@ -16,22 +17,23 @@ namespace Modules.Extensions.Prototypes
                 Create();
         }
 
-        public virtual void Create()
+        public virtual Entity Create()
         {
-            var ent = prototype.Create();
+            var entity = prototype.Create();
             if (createEntityProvider)
             {
                 var entityProvider = gameObject.AddComponent<EntityProvider>();
-                entityProvider.entity = ent;
+                entityProvider.entity = entity;
                 entityProvider.destroyEntityWhenDestroyed = destroyEntityWithGameObject;
             }
             else if (gameObject.TryGetComponent<EntityProvider>(out var entityProvider))
             {
-                entityProvider.entity = ent;
+                entityProvider.entity = entity;
                 entityProvider.destroyEntityWhenDestroyed = destroyEntityWithGameObject;
             }
 
             Destroy(this);
+            return entity;
         }
     }
 }
