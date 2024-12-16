@@ -34,7 +34,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 return;
             }
 
-            if (Directory.Exists(CompileHackDirectory))
+            if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
             {
                 Debug.Log("[Modules.Proto] Delete temp hack file");
                 Directory.Delete(CompileHackDirectory, true);
