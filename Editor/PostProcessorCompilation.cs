@@ -1,11 +1,11 @@
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Pdb;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Cecil.Pdb;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -40,7 +40,6 @@ namespace Modules.Extensions.Prototypes.Editor
                 Directory.Delete(CompileHackDirectory, true);
                 File.Delete($"{CompileHackDirectory}.meta");
             }
-
         }
 
         private static void CreateHackFile()
@@ -51,7 +50,6 @@ namespace Modules.Extensions.Prototypes.Editor
             var timestamp = (long)(DateTime.Now - DateTime.UnixEpoch).TotalSeconds;
             File.WriteAllText(CompileHackFile, $"internal static class __ModulesProtoHack__{timestamp} {{}}");
         }
-
 
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
         public static void ForceUpdateFromMenu()
@@ -64,16 +62,55 @@ namespace Modules.Extensions.Prototypes.Editor
         {
             EditorApplication.LockReloadAssemblies();
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
-            foreach (var assembly in assemblies)
+            var assembliesLookUp = assemblies.Select(ass => ass.name).ToHashSet();
+            var list = new LinkedList<Assembly>(assemblies);
+            var infSave = 100 + list.Count;
+            while (list.Count > 0 && infSave > 0)
             {
+                infSave--;
+                var assembly = list.First();
                 var assemblyName = assembly.name;
                 if (assemblyName.StartsWith("Unity.") || assemblyName.StartsWith("UnityEngine"))
+                {
+                    list.RemoveFirst();
+                    assembliesLookUp.Remove(assemblyName);
                     continue;
+                }
 
                 if (assemblyName.StartsWith("ModulesFramework.") || assemblyName.StartsWith("Modules.Extensions."))
+                {
+                    list.RemoveFirst();
+                    assembliesLookUp.Remove(assemblyName);
                     continue;
+                }
 
-                CreateComponentsWrappers(assembly.outputPath);
+                var isRelyingOn = false;
+                foreach (var reference in assembly.assemblyReferences)
+                {
+                    if (assembliesLookUp.Contains(reference.name))
+                    {
+                        isRelyingOn = true;
+                        break;
+                    }
+                }
+
+                if (isRelyingOn)
+                {
+                    list.RemoveFirst();
+                    list.AddLast(assembly);
+                    continue;
+                }
+
+                var suc = CreateComponentsWrappers(assembly.outputPath);
+                if (suc)
+                {
+                    list.RemoveFirst();
+                    assembliesLookUp.Remove(assemblyName);
+                }
+                else
+                {
+                    Thread.Sleep(100);
+                }
             }
 
             EditorApplication.UnlockReloadAssemblies();
@@ -115,11 +152,8 @@ namespace Modules.Extensions.Prototypes.Editor
         private static bool CreateComponentsWrappers(string assemblyPath)
         {
             AssemblyDefinition assembly;
-            var mutex = new Mutex();
             try
             {
-                mutex.WaitOne();
-
                 using var fileStream =
                     new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
                 assembly = AssemblyDefinition.ReadAssembly(fileStream, new ReaderParameters(ReadingMode.Immediate)
@@ -162,12 +196,6 @@ namespace Modules.Extensions.Prototypes.Editor
                 Debug.LogWarning("[Modules.Proto] Failed to read assembly: " + assemblyPath + "\n\r Exception: " + e);
                 return true;
             }
-            finally
-            {
-                mutex.ReleaseMutex();
-            }
-
-            EditorUtility.RequestScriptReload();
         }
 
         private static void CreateWrapper(ModuleDefinition module, TypeDefinition componentType)
