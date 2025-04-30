@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using ModulesFramework.Utils.Types;
+using UnityEditor;
 using UnityEngine;
 
 namespace Modules.Extensions.Prototypes.Editor
@@ -49,7 +50,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 var innerComponent = element.FindPropertyRelative("component");
                 var componentType = (element.managedReferenceValue as MonoComponent).ComponentType;
 
-                var guiContent = new GUIContent(componentType.Name);
+                var guiContent = new GUIContent(componentType.GetTypeName());
                 if (innerComponent != null && innerComponent.hasChildren)
                 {
                     var removeBtnRect = rect;

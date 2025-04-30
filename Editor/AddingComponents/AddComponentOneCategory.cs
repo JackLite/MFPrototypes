@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ModulesFramework.Utils.Types;
 using UnityEditor;
 using UnityEngine.UIElements;
 
@@ -62,7 +63,7 @@ namespace Modules.Extensions.Prototypes.Editor.AddingComponents
             foreach (var subCategory in _subCategories.Values)
                 subCategory.Sort();
 
-            foreach (var component in _components.OrderBy(c => c.componentType.Name))
+            foreach (var component in _components.OrderBy(c => c.componentType.GetTypeName()))
                 component.BringToFront();
         }
     }

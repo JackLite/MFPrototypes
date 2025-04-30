@@ -1,4 +1,5 @@
 ﻿using System;
+using ModulesFramework.Utils.Types;
 using UnityEngine.UIElements;
 
 namespace Modules.Extensions.Prototypes.Editor.AddingComponents
@@ -30,7 +31,7 @@ namespace Modules.Extensions.Prototypes.Editor.AddingComponents
             var container = new ComponentContainer(serializedType, btn);
             container.AddToClassList("modules-proto--add-component--container");
 
-            var label = new Label(serializedType.Name);
+            var label = new Label(serializedType.GetTypeName());
             container.Add(label);
             container.Add(btn);
             return container;

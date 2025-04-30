@@ -3,6 +3,7 @@ using ModulesFrameworkUnity.Utils;
 using System;
 using System.Linq;
 using System.Reflection;
+using ModulesFramework.Utils.Types;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -192,13 +193,13 @@ namespace Modules.Extensions.Prototypes.Editor
                 if (innerComponent != null && innerComponent.hasChildren)
                 {
                     var componentField = new PropertyField(innerComponent);
-                    componentField.label = componentType.Name;
+                    componentField.label = componentType.GetTypeName();
                     componentField.Bind(componentsProp.serializedObject);
                     propertyContainer.Add(componentField);
                 }
                 else
                 {
-                    var label = new Label(componentType.Name);
+                    var label = new Label(componentType.GetTypeName());
                     propertyContainer.Add(label);
                 }
 
@@ -211,8 +212,8 @@ namespace Modules.Extensions.Prototypes.Editor
 
             _componentsContainer.Sort((el1, el2) =>
             {
-                var name1 = ((ComponentContainer)el1).componentType.Name;
-                var name2 = ((ComponentContainer)el2).componentType.Name;
+                var name1 = ((ComponentContainer)el1).componentType.GetTypeName();
+                var name2 = ((ComponentContainer)el2).componentType.GetTypeName();
                 return string.Compare(name1, name2, StringComparison.Ordinal);
             });
         }

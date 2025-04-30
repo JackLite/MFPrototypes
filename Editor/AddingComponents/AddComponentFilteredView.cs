@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ModulesFramework.Utils.Types;
 using UnityEngine.UIElements;
 
 namespace Modules.Extensions.Prototypes.Editor.AddingComponents
@@ -17,7 +18,7 @@ namespace Modules.Extensions.Prototypes.Editor.AddingComponents
         {
             var container = CreateComponentContainer(serializedType);
             Add(container);
-            _components.Add(serializedType.Name, container);
+            _components.Add(serializedType.GetTypeName(), container);
         }
 
         private VisualElement CreateComponentContainer(Type serializedType)
