@@ -2,6 +2,7 @@ using ModulesFramework.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ModulesFramework.Utils.Types;
 using UnityEngine;
 
 namespace Modules.Extensions.Prototypes
@@ -59,7 +60,7 @@ namespace Modules.Extensions.Prototypes
         public virtual T GetPrototypeComponent<T>() where T : struct
         {
             if (_multipleTypes.Contains(typeof(T)))
-                throw new Exception($"Type {typeof(T).Name} is multiple. Use ");
+                throw new Exception($"Type {typeof(T).GetTypeName()} is multiple but used as single!");
             foreach (var wrapper in components)
             {
                 if (wrapper.ComponentType == typeof(T))
@@ -74,7 +75,7 @@ namespace Modules.Extensions.Prototypes
         public virtual IEnumerable<T> GetPrototypeMultipleComponents<T>() where T : struct
         {
             if (!_multipleTypes.Contains(typeof(T)))
-                throw new Exception($"Type {typeof(T).Name} is multiple. Use ");
+                throw new Exception($"Type {typeof(T).GetTypeName()} is not multiple but used as it is");
             foreach (var wrapper in components)
             {
                 if (wrapper.ComponentType == typeof(T))
