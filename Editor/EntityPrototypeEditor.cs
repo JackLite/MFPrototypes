@@ -14,7 +14,6 @@ namespace Modules.Extensions.Prototypes.Editor
     [CustomPropertyDrawer(typeof(EntityPrototype))]
     public class EntityPrototypeEditor : PropertyDrawer
     {
-        private readonly UnityAssemblyFilter _assemblyFilter = new();
         private VisualElement _componentsContainer;
 
 #if !UNITY_2022_1_OR_NEWER
@@ -133,8 +132,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
         internal void ShowAddComponentModal(SerializedProperty property)
         {
-            var serializedTypes = AppDomain.CurrentDomain.GetAssemblies()
-                .Where(asm => _assemblyFilter.Filter(asm))
+            var serializedTypes = AssemblyUtils.GetAssemblies()
                 .SelectMany(assembly => assembly.GetTypes())
                 .Where(t => t.GetCustomAttribute<PrototypeAttribute>() != null);
 
@@ -145,8 +143,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
         private void AddComponent(SerializedProperty property, Type type)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies()
-                .Where(asm => _assemblyFilter.Filter(asm));
+            var assemblies = AssemblyUtils.GetAssemblies();
             var allWrappers = assemblies
                 .SelectMany(assembly => assembly.GetTypes())
                 .Where(IsWrapper);
