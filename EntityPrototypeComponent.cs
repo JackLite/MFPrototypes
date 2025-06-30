@@ -9,6 +9,7 @@ namespace Modules.Extensions.Prototypes
         public bool createOnStart = true;
         public bool createEntityProvider = true;
         public bool destroyEntityWithGameObject = true;
+        public bool removePrototypeAfterCreation = true;
         public EntityPrototype prototype;
 
         public virtual void Start()
@@ -32,7 +33,8 @@ namespace Modules.Extensions.Prototypes
                 entityProvider.destroyEntityWhenDestroyed = destroyEntityWithGameObject;
             }
 
-            Destroy(this);
+            if (removePrototypeAfterCreation)
+                Destroy(this);
             return entity;
         }
     }
