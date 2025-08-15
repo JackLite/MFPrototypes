@@ -41,7 +41,8 @@ namespace Modules.Extensions.Prototypes.Editor
             SerializationUtility.ClearAllManagedReferencesWithMissingTypes(property.serializedObject.targetObject);
             var root = CreateRoot(property);
             var styles = Resources.Load<StyleSheet>("ModulesPrototypesUSS");
-            root.styleSheets.Add(styles);
+            if (styles != null)
+                root.styleSheets.Add(styles);
             root.AddToClassList("modules-proto--inspector");
 
             var customIdField = new PropertyField(property.FindPropertyRelative(nameof(EntityPrototype.customId)));
@@ -63,16 +64,26 @@ namespace Modules.Extensions.Prototypes.Editor
         /// <summary>
         ///     Override this method to add additional fields before the components list
         /// </summary>
-        protected virtual void DrawAdditional(SerializedProperty property, VisualElement root) { }
+        protected virtual void DrawAdditional(SerializedProperty property, VisualElement root)
+        {
+        }
 
         private Foldout CreateRoot(SerializedProperty property)
         {
             var root = new Foldout();
-            root.SetValueWithoutNotify(EditorPrefs.GetBool(GetPrefKey(property)));
+            if (EditorPrefs.HasKey(GetPrefKey(property)))
+                root.SetValueWithoutNotify(EditorPrefs.GetBool(GetPrefKey(property)));
+            else
+                root.SetValueWithoutNotify(true);
             root.RegisterValueChangedCallback(ev =>
             {
+#if UNITY_6000_1_OR_NEWER
+                if (ev.target != root)
+                    return;
+#else
                 if (ev.propagationPhase != PropagationPhase.AtTarget)
                     return;
+#endif
                 EditorPrefs.SetBool(GetPrefKey(property), ev.newValue);
             });
             root.text = property.displayName;
@@ -80,10 +91,7 @@ namespace Modules.Extensions.Prototypes.Editor
 
             var menuManipulator = new ContextualMenuManipulator(builder =>
             {
-                builder.menu.AppendAction("Clear null refs", _ =>
-                {
-                    ClearNullRefs(property);
-                });
+                builder.menu.AppendAction("Clear null refs", _ => { ClearNullRefs(property); });
             });
             root.Q<Label>().AddManipulator(menuManipulator);
 
@@ -121,10 +129,7 @@ namespace Modules.Extensions.Prototypes.Editor
         {
             var btn = new Button();
             btn.text = "Add proto-component";
-            btn.clicked += () =>
-            {
-                ShowAddComponentModal(property);
-            };
+            btn.clicked += () => { ShowAddComponentModal(property); };
             btn.AddToClassList("modules-proto--add-component-btn");
 
             root.Add(btn);
@@ -180,7 +185,8 @@ namespace Modules.Extensions.Prototypes.Editor
                 var element = componentsProp.GetArrayElementAtIndex(index);
                 if (element.managedReferenceValue == null)
                 {
-                    Debug.LogWarning("[Modules.Proto] There is null reference in prototype. Use 'Clear null refs' from prototype context menu.");
+                    Debug.LogWarning(
+                        "[Modules.Proto] There is null reference in prototype. Use 'Clear null refs' from prototype context menu.");
                     continue;
                 }
 

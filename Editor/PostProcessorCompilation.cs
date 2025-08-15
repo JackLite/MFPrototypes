@@ -34,12 +34,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 return;
             }
 
-            if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
-            {
-                Debug.Log("[Modules.Proto] Delete temp hack file");
-                Directory.Delete(CompileHackDirectory, true);
-                File.Delete($"{CompileHackDirectory}.meta");
-            }
+            RemoveHackFileIfExists();
         }
 
         private static void CreateHackFile()
@@ -112,17 +107,29 @@ namespace Modules.Extensions.Prototypes.Editor
                     Thread.Sleep(100);
                 }
             }
-
+            RemoveHackFileIfExists();
             EditorApplication.UnlockReloadAssemblies();
             EditorUtility.RequestScriptReload();
         }
 
         private static void OnCompilationFinished(object obj)
         {
+            RemoveHackFileIfExists();
             if (_assembliesPath.Count == 0)
                 return;
             CompilationPipeline.compilationFinished += AddPrototypes;
             CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
+        }
+
+        private static void RemoveHackFileIfExists()
+        {
+            if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
+            {
+                Debug.Log("[Modules.Proto] Delete temp hack file");
+                Directory.Delete(CompileHackDirectory, true);
+                File.Delete($"{CompileHackDirectory}.meta");
+                AssetDatabase.Refresh();
+            }
         }
 
         private static void AddPrototypes(object _)
@@ -155,13 +162,13 @@ namespace Modules.Extensions.Prototypes.Editor
             try
             {
                 using var fileStream =
-                    new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+                    new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
                 assembly = AssemblyDefinition.ReadAssembly(fileStream, new ReaderParameters(ReadingMode.Immediate)
                 {
                     ReadWrite = true,
                     AssemblyResolver = new AssemblyResolver(assemblyPath),
-                    ReadSymbols = true,
-                    ReadingMode = ReadingMode.Immediate,
+                    ReadSymbols = false,
+                    ReadingMode = ReadingMode.Deferred,
                     SymbolReaderProvider = new PdbReaderProvider()
                 });
 
