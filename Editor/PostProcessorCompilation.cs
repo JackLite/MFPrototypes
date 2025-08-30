@@ -31,19 +31,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 Debug.Log("[Modules.Proto] Force update assemblies when editor starts.");
                 ForceUpdateAssemblies();
                 CreateHackFile();
-                return;
             }
-
-            RemoveHackFileIfExists();
-        }
-
-        private static void CreateHackFile()
-        {
-            Debug.Log("[Modules.Proto] Create temp hack file");
-            if (!Directory.Exists(CompileHackDirectory))
-                Directory.CreateDirectory(CompileHackDirectory);
-            var timestamp = (long)(DateTime.Now - DateTime.UnixEpoch).TotalSeconds;
-            File.WriteAllText(CompileHackFile, $"internal static class __ModulesProtoHack__{timestamp} {{}}");
         }
 
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
@@ -53,13 +41,25 @@ namespace Modules.Extensions.Prototypes.Editor
             ForceUpdateAssemblies();
         }
 
+        private static void OnCompilationFinished(object obj)
+        {
+            if (_assembliesPath.Count == 0)
+            {
+                RemoveHackFileIfExists();
+                return;
+            }
+
+            CompilationPipeline.compilationFinished += AddPrototypes;
+            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
+        }
+
         private static void ForceUpdateAssemblies()
         {
             EditorApplication.LockReloadAssemblies();
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
             var assembliesLookUp = assemblies.Select(ass => ass.name).ToHashSet();
             var list = new LinkedList<Assembly>(assemblies);
-            var infSave = 100 + list.Count;
+            var infSave = 10 + list.Count;
             while (list.Count > 0 && infSave > 0)
             {
                 infSave--;
@@ -107,18 +107,19 @@ namespace Modules.Extensions.Prototypes.Editor
                     Thread.Sleep(100);
                 }
             }
-            RemoveHackFileIfExists();
+
             EditorApplication.UnlockReloadAssemblies();
             EditorUtility.RequestScriptReload();
         }
 
-        private static void OnCompilationFinished(object obj)
+        private static void CreateHackFile()
         {
-            RemoveHackFileIfExists();
-            if (_assembliesPath.Count == 0)
-                return;
-            CompilationPipeline.compilationFinished += AddPrototypes;
-            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
+            Debug.Log("[Modules.Proto] Create temp hack file");
+            if (!Directory.Exists(CompileHackDirectory))
+                Directory.CreateDirectory(CompileHackDirectory);
+            var timestamp = (long)(DateTime.Now - DateTime.UnixEpoch).TotalSeconds;
+            File.WriteAllText(CompileHackFile, $"internal static class __ModulesProtoHack__{timestamp} {{}}");
+            AssetDatabase.Refresh();
         }
 
         private static void RemoveHackFileIfExists()
@@ -126,9 +127,7 @@ namespace Modules.Extensions.Prototypes.Editor
             if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
             {
                 Debug.Log("[Modules.Proto] Delete temp hack file");
-                Directory.Delete(CompileHackDirectory, true);
-                File.Delete($"{CompileHackDirectory}.meta");
-                AssetDatabase.Refresh();
+                AssetDatabase.DeleteAsset(CompileHackDirectory);
             }
         }
 
