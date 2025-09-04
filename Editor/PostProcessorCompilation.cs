@@ -32,6 +32,8 @@ namespace Modules.Extensions.Prototypes.Editor
                 ForceUpdateAssemblies();
                 CreateHackFile();
             }
+
+            StartDeletingHackFile();
         }
 
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
@@ -44,10 +46,7 @@ namespace Modules.Extensions.Prototypes.Editor
         private static void OnCompilationFinished(object obj)
         {
             if (_assembliesPath.Count == 0)
-            {
-                RemoveHackFileIfExists();
                 return;
-            }
 
             CompilationPipeline.compilationFinished += AddPrototypes;
             CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
@@ -122,13 +121,23 @@ namespace Modules.Extensions.Prototypes.Editor
             AssetDatabase.Refresh();
         }
 
-        private static void RemoveHackFileIfExists()
+        private static void StartDeletingHackFile()
         {
+            EditorApplication.update += CheckDeletionHackFile;
+        }
+
+        private static void CheckDeletionHackFile()
+        {
+            if (EditorApplication.isUpdating || EditorApplication.isCompiling)
+                return;
+
             if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
             {
                 Debug.Log("[Modules.Proto] Delete temp hack file");
                 AssetDatabase.DeleteAsset(CompileHackDirectory);
             }
+
+            EditorApplication.update -= CheckDeletionHackFile;
         }
 
         private static void AddPrototypes(object _)
