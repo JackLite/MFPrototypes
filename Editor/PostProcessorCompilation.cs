@@ -58,7 +58,7 @@ namespace Modules.Extensions.Prototypes.Editor
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
             var assembliesLookUp = assemblies.Select(ass => ass.name).ToHashSet();
             var list = new LinkedList<Assembly>(assemblies);
-            var infSave = 10 + list.Count;
+            var infSave = 100 + list.Count;
             while (list.Count > 0 && infSave > 0)
             {
                 infSave--;
