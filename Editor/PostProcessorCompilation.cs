@@ -8,7 +8,9 @@ using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
 using UnityEditor;
 using UnityEditor.Compilation;
+using UnityEditor.VersionControl;
 using UnityEngine;
+using FileMode = System.IO.FileMode;
 
 namespace Modules.Extensions.Prototypes.Editor
 {
@@ -22,6 +24,8 @@ namespace Modules.Extensions.Prototypes.Editor
 
         static PostProcessorCompilation()
         {
+            CompilationPipeline.compilationFinished -= OnCompilationFinished;
+            CompilationPipeline.assemblyCompilationFinished -= OnAssemblyCompilationFinished;
             CompilationPipeline.compilationFinished += OnCompilationFinished;
             CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
             // update prototypes when it's first time editor loads domain
@@ -135,6 +139,7 @@ namespace Modules.Extensions.Prototypes.Editor
             {
                 Debug.Log("[Modules.Proto] Delete temp hack file");
                 AssetDatabase.DeleteAsset(CompileHackDirectory);
+                AssetDatabase.Refresh();
             }
 
             EditorApplication.update -= CheckDeletionHackFile;
@@ -142,7 +147,9 @@ namespace Modules.Extensions.Prototypes.Editor
 
         private static void AddPrototypes(object _)
         {
+            EditorApplication.LockReloadAssemblies();
             _assembliesPath.RemoveAll(CreateComponentsWrappers);
+            EditorApplication.UnlockReloadAssemblies();
             CompilationPipeline.compilationFinished -= AddPrototypes;
         }
 
@@ -169,6 +176,7 @@ namespace Modules.Extensions.Prototypes.Editor
             AssemblyDefinition assembly;
             try
             {
+                Debug.Log($"Start processing assembly at {assemblyPath}");
                 using var fileStream =
                     new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
                 assembly = AssemblyDefinition.ReadAssembly(fileStream, new ReaderParameters(ReadingMode.Immediate)
