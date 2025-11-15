@@ -8,36 +8,24 @@ using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
 using UnityEditor;
 using UnityEditor.Compilation;
-using UnityEditor.VersionControl;
 using UnityEngine;
-using FileMode = System.IO.FileMode;
+using UnityEngine.Scripting;
 
 namespace Modules.Extensions.Prototypes.Editor
 {
     [InitializeOnLoad]
     public static class PostProcessorCompilation
     {
-        private const string CompileHackFile = CompileHackDirectory + "/ModulesProtoHack.cs";
-        public const string CompileHackDirectory = "Assets/__ModulesProto__";
-
-        private static readonly List<string> _assembliesPath = new();
-
         static PostProcessorCompilation()
         {
-            CompilationPipeline.compilationFinished -= OnCompilationFinished;
-            CompilationPipeline.assemblyCompilationFinished -= OnAssemblyCompilationFinished;
-            CompilationPipeline.compilationFinished += OnCompilationFinished;
             CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
-            // update prototypes when it's first time editor loads domain
+
             if (!SessionState.GetBool("Modules.FirstEditorDomainLoad", false))
             {
-                SessionState.SetBool("Modules.FirstEditorDomainLoad", true);
                 Debug.Log("[Modules.Proto] Force update assemblies when editor starts.");
                 ForceUpdateAssemblies();
-                CreateHackFile();
+                SessionState.SetBool("Modules.FirstEditorDomainLoad", true);
             }
-
-            StartDeletingHackFile();
         }
 
         [MenuItem("Modules/Prototypes/Force update prototypes", priority = -10)]
@@ -47,16 +35,13 @@ namespace Modules.Extensions.Prototypes.Editor
             ForceUpdateAssemblies();
         }
 
-        private static void OnCompilationFinished(object obj)
+        private static void ForceUpdateAssemblies()
         {
-            if (_assembliesPath.Count == 0)
-                return;
-
-            CompilationPipeline.compilationFinished += AddPrototypes;
-            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.None);
+            UpdateAllAssemblies();
+            CompilationPipeline.RequestScriptCompilation(RequestScriptCompilationOptions.CleanBuildCache);
         }
 
-        private static void ForceUpdateAssemblies()
+        private static void UpdateAllAssemblies()
         {
             EditorApplication.LockReloadAssemblies();
             var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies);
@@ -112,54 +97,12 @@ namespace Modules.Extensions.Prototypes.Editor
             }
 
             EditorApplication.UnlockReloadAssemblies();
-            EditorUtility.RequestScriptReload();
-        }
-
-        private static void CreateHackFile()
-        {
-            Debug.Log("[Modules.Proto] Create temp hack file");
-            if (!Directory.Exists(CompileHackDirectory))
-                Directory.CreateDirectory(CompileHackDirectory);
-            var timestamp = (long)(DateTime.Now - DateTime.UnixEpoch).TotalSeconds;
-            File.WriteAllText(CompileHackFile, $"internal static class __ModulesProtoHack__{timestamp} {{}}");
-            AssetDatabase.Refresh();
-        }
-
-        private static void StartDeletingHackFile()
-        {
-            EditorApplication.update += CheckDeletionHackFile;
-        }
-
-        private static void CheckDeletionHackFile()
-        {
-            if (EditorApplication.isUpdating || EditorApplication.isCompiling)
-                return;
-
-            if (Directory.Exists(CompileHackDirectory) && !Application.isBatchMode)
-            {
-                Debug.Log("[Modules.Proto] Delete temp hack file");
-                AssetDatabase.DeleteAsset(CompileHackDirectory);
-                AssetDatabase.Refresh();
-            }
-
-            EditorApplication.update -= CheckDeletionHackFile;
-        }
-
-        private static void AddPrototypes(object _)
-        {
-            EditorApplication.LockReloadAssemblies();
-            _assembliesPath.RemoveAll(CreateComponentsWrappers);
-            EditorApplication.UnlockReloadAssemblies();
-            CompilationPipeline.compilationFinished -= AddPrototypes;
         }
 
         private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] compilerMessages)
         {
             if (compilerMessages.Any(c => c.type == CompilerMessageType.Error))
-            {
-                _assembliesPath.Clear();
                 return;
-            }
 
             var assemblyName = Path.GetFileName(assemblyPath);
             if (assemblyName.StartsWith("Unity.") || assemblyName.StartsWith("UnityEngine"))
@@ -168,7 +111,7 @@ namespace Modules.Extensions.Prototypes.Editor
             if (assemblyName.StartsWith("ModulesFramework.") || assemblyName.StartsWith("Modules.Extensions."))
                 return;
 
-            _assembliesPath.Add(assemblyPath);
+            CreateComponentsWrappers(assemblyPath);
         }
 
         private static bool CreateComponentsWrappers(string assemblyPath)
@@ -176,7 +119,6 @@ namespace Modules.Extensions.Prototypes.Editor
             AssemblyDefinition assembly;
             try
             {
-                Debug.Log($"Start processing assembly at {assemblyPath}");
                 using var fileStream =
                     new FileStream(assemblyPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
                 assembly = AssemblyDefinition.ReadAssembly(fileStream, new ReaderParameters(ReadingMode.Immediate)
@@ -248,6 +190,9 @@ namespace Modules.Extensions.Prototypes.Editor
                                    | MethodAttributes.RTSpecialName;
             var ctor = new MethodDefinition(".ctor", methodAttributes, module.TypeSystem.Void);
             newType.Methods.Add(ctor);
+            var preserveAttributeCtor = typeof(PreserveAttribute).GetConstructor(Type.EmptyTypes);
+            var preserveAttribute = new CustomAttribute(module.ImportReference(preserveAttributeCtor));
+            newType.CustomAttributes.Add(preserveAttribute);
             var il = ctor.Body.GetILProcessor();
             il.Emit(OpCodes.Ret);
 
