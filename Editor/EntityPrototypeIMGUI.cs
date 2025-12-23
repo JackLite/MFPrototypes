@@ -1,6 +1,8 @@
 ﻿using ModulesFramework.Utils.Types;
 using UnityEditor;
 using UnityEngine;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
 
 namespace Modules.Extensions.Prototypes.Editor
 {
@@ -96,9 +98,10 @@ namespace Modules.Extensions.Prototypes.Editor
             buttonRect.size = EditorStyles.miniButtonMid.CalcSize(buttonContent);
             buttonRect.width += 30;
             buttonRect.y += 10;
+            var stub = new VisualElement();
             if (GUI.Button(buttonRect, buttonContent))
             {
-                _editor.ShowAddComponentModal(property);
+                _editor.ShowAddComponentModal(property, stub);
             }
         }
 

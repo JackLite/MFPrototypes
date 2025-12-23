@@ -14,9 +14,6 @@ namespace Modules.Extensions.Prototypes.Editor
     [CustomPropertyDrawer(typeof(EntityPrototype))]
     public class EntityPrototypeEditor : PropertyDrawer
     {
-        private VisualElement _componentsContainer;
-
-#if !UNITY_2022_1_OR_NEWER
         private EntityPrototypeIMGUI _entityPrototypeIMGUI;
 
         public EntityPrototypeEditor()
@@ -33,7 +30,6 @@ namespace Modules.Extensions.Prototypes.Editor
         {
             return _entityPrototypeIMGUI.GetHeight(property);
         }
-#endif
 
         // N.B. This works only if the inspector is fully based on UIToolkit that is wrong until the Unity 2022 version
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
@@ -50,13 +46,14 @@ namespace Modules.Extensions.Prototypes.Editor
             root.Add(customIdField);
             DrawAdditional(property, root);
 
-            _componentsContainer = new VisualElement();
-            _componentsContainer.AddToClassList("modules-proto--components-container");
+            // do not store components container in drawer because drawer is not creating for every element of lists
+            var componentsContainer = new VisualElement();
+            componentsContainer.AddToClassList("modules-proto--components-container");
 
-            root.Add(_componentsContainer);
-            DrawComponents(property);
+            root.Add(componentsContainer);
+            DrawComponents(property, componentsContainer);
 
-            DrawAddComponent(property, root);
+            DrawAddComponent(property, root, componentsContainer);
 
             return root;
         }
@@ -125,28 +122,31 @@ namespace Modules.Extensions.Prototypes.Editor
                 EditorUtility.SetDirty(target);
         }
 
-        private void DrawAddComponent(SerializedProperty property, VisualElement root)
+        private void DrawAddComponent(
+            SerializedProperty property, 
+            VisualElement root, 
+            VisualElement componentsContainer)
         {
             var btn = new Button();
             btn.text = "Add proto-component";
-            btn.clicked += () => { ShowAddComponentModal(property); };
+            btn.clicked += () => { ShowAddComponentModal(property, componentsContainer); };
             btn.AddToClassList("modules-proto--add-component-btn");
 
             root.Add(btn);
         }
 
-        internal void ShowAddComponentModal(SerializedProperty property)
+        internal void ShowAddComponentModal(SerializedProperty property, VisualElement componentsContainer)
         {
             var serializedTypes = AssemblyUtils.GetAssemblies()
                 .SelectMany(assembly => assembly.GetTypes())
                 .Where(t => t.GetCustomAttribute<PrototypeAttribute>() != null);
 
             var window = ScriptableObject.CreateInstance<AddComponentPopup>();
-            window.OnAddClicked += (type) => AddComponent(property, type);
+            window.OnAddClicked += (type) => AddComponent(property, type, componentsContainer);
             window.Show(serializedTypes);
         }
 
-        private void AddComponent(SerializedProperty property, Type type)
+        private void AddComponent(SerializedProperty property, Type type, VisualElement componentsContainer)
         {
             var assemblies = AssemblyUtils.GetAssemblies();
             var allWrappers = assemblies
@@ -167,15 +167,13 @@ namespace Modules.Extensions.Prototypes.Editor
                 EditorUtility.SetDirty(componentsProp.serializedObject.targetObject);
                 break;
             }
-
-#if UNITY_2022_1_OR_NEWER
-            DrawComponents(property);
-#endif
+            
+            DrawComponents(property, componentsContainer);
         }
 
-        private void DrawComponents(SerializedProperty property)
+        private void DrawComponents(SerializedProperty property, VisualElement componentsContainer)
         {
-            _componentsContainer.Clear();
+            componentsContainer.Clear();
             var componentsProp = property.FindPropertyRelative(nameof(EntityPrototype.components));
 
             for (var index = 0; index < componentsProp.arraySize; index++)
@@ -208,12 +206,12 @@ namespace Modules.Extensions.Prototypes.Editor
 
                 propertyContainer.componentType = componentType;
 
-                var btn = CreateRemoveBtn(property, index);
+                var btn = CreateRemoveBtn(property, index, componentsContainer);
                 propertyContainer.Add(btn);
-                _componentsContainer.Add(propertyContainer);
+                componentsContainer.Add(propertyContainer);
             }
 
-            _componentsContainer.Sort((el1, el2) =>
+            componentsContainer.Sort((el1, el2) =>
             {
                 var name1 = ((ComponentContainer)el1).componentType.GetTypeName();
                 var name2 = ((ComponentContainer)el2).componentType.GetTypeName();
@@ -221,7 +219,7 @@ namespace Modules.Extensions.Prototypes.Editor
             });
         }
 
-        private VisualElement CreateRemoveBtn(SerializedProperty property, int index)
+        private VisualElement CreateRemoveBtn(SerializedProperty property, int index, VisualElement componentsContainer)
         {
             var btn = new Button();
             btn.text = "Remove";
@@ -229,7 +227,7 @@ namespace Modules.Extensions.Prototypes.Editor
             btn.clicked += () =>
             {
                 RemoveWrapper(property, index);
-                DrawComponents(property);
+                DrawComponents(property, componentsContainer);
             };
             return btn;
         }

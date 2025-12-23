@@ -12,6 +12,7 @@ namespace Modules.Extensions.Prototypes.Editor.AddingComponents
     {
         private AddComponentFilteredView _filteredView;
         private AddComponentCategoryView _categoryView;
+        private TextField _searchInput;
         public event Action<Type> OnAddClicked;
 
         public void Show(IEnumerable<Type> serializedTypes)
@@ -25,8 +26,13 @@ namespace Modules.Extensions.Prototypes.Editor.AddingComponents
 
             CreateCategoryView(serializedTypes);
             CreateFilterView(serializedTypes);
-
+            
             ShowAuxWindow();
+        }
+
+        public void OnBecameVisible()
+        {
+            _searchInput.Focus();
         }
 
         private void CreateCategoryView(IEnumerable<Type> serializedTypes)
@@ -49,11 +55,11 @@ namespace Modules.Extensions.Prototypes.Editor.AddingComponents
 
         private void DrawSearch()
         {
-            var input = new TextField();
-            input.label = "Search: ";
-            input.AddToClassList("modules-proto--add-component--search-input");
-            input.RegisterValueChangedCallback(ev => Filter(ev.newValue));
-            rootVisualElement.Add(input);
+            _searchInput = new TextField();
+            _searchInput.label = "Search: ";
+            _searchInput.AddToClassList("modules-proto--add-component--search-input");
+            _searchInput.RegisterValueChangedCallback(ev => Filter(ev.newValue));
+            rootVisualElement.Add(_searchInput);
         }
 
         private void Filter(string value)
