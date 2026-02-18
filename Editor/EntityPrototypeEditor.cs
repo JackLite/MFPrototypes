@@ -55,7 +55,41 @@ namespace Modules.Extensions.Prototypes.Editor
 
             DrawAddComponent(property, root, componentsContainer);
 
+            // odin creates an additional element in the hierarchy, and sometimes it goes after prototype inspector
+            // in this case inspector is blocked by this element;
+            // this fix allows work with prototype inspector through that additional element
+#if ODIN_INSPECTOR
+            OdinFix(root);
+#endif
+            
             return root;
+        }
+
+        private void OdinFix(VisualElement root)
+        {
+            root.RegisterCallback<PointerEnterEvent, VisualElement>((_, r) =>
+            {
+                var odinImguiHackElement = FindInParent(r,
+                    el => el.ClassListContains("unity-inspector-element__custom-inspector-container"));
+                if (odinImguiHackElement == null)
+                    return;
+
+                odinImguiHackElement.pickingMode = PickingMode.Ignore;
+            }, root);
+        }
+
+        private VisualElement FindInParent(VisualElement element, Func<VisualElement, bool> search)
+        {
+            if (element.parent == null)
+                return null;
+
+            foreach (var child in element.parent.Children())
+            {
+                if (search(child))
+                    return child;
+            }
+
+            return FindInParent(element.parent, search);
         }
 
         /// <summary>
@@ -123,8 +157,8 @@ namespace Modules.Extensions.Prototypes.Editor
         }
 
         private void DrawAddComponent(
-            SerializedProperty property, 
-            VisualElement root, 
+            SerializedProperty property,
+            VisualElement root,
             VisualElement componentsContainer)
         {
             var btn = new Button();
@@ -167,7 +201,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 EditorUtility.SetDirty(componentsProp.serializedObject.targetObject);
                 break;
             }
-            
+
             DrawComponents(property, componentsContainer);
         }
 
