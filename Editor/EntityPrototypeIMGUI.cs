@@ -11,6 +11,8 @@ namespace Modules.Extensions.Prototypes.Editor
         private readonly EntityPrototypeEditor _editor;
         private bool _isOpen = true;
 
+        private const float CustomIdMarginBottom = 15;
+
         public EntityPrototypeIMGUI(EntityPrototypeEditor editor)
         {
             _editor = editor;
@@ -33,12 +35,22 @@ namespace Modules.Extensions.Prototypes.Editor
             EditorGUI.EndProperty();
         }
 
+        private Rect DrawCustomId(Rect position, SerializedProperty property)
+        {
+            position.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+            var customIdProperty = property.FindPropertyRelative(nameof(EntityPrototype.customId));
+            EditorGUI.PropertyField(position, customIdProperty, new GUIContent("Custom Id"), true);
+            position.y += CustomIdMarginBottom;
+            return position;
+        }
+        
         private void DrawInner(Rect position, SerializedProperty property)
         {
+            position = DrawCustomId(position, property);
             position.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             var componentsProp = property.FindPropertyRelative(nameof(EntityPrototype.components));
 
-            var rect = new Rect(position.x + 20, position.y, position.width - 10, position.height);
+            var rect = new Rect(position.x + 10, position.y, position.width - 10, position.height);
 
             for (var index = 0; index < componentsProp.arraySize;)
             {
@@ -94,10 +106,12 @@ namespace Modules.Extensions.Prototypes.Editor
             }
 
             var buttonRect = rect;
-            var buttonContent = new GUIContent("Add component");
+            var buttonContent = new GUIContent("Add proto-component");
             buttonRect.size = EditorStyles.miniButtonMid.CalcSize(buttonContent);
             buttonRect.width += 30;
+            buttonRect.height += 5;
             buttonRect.y += 10;
+            buttonRect.x -= 10;
             var stub = new VisualElement();
             if (GUI.Button(buttonRect, buttonContent))
             {
@@ -108,8 +122,11 @@ namespace Modules.Extensions.Prototypes.Editor
         public float GetHeight(SerializedProperty property)
         {
             var result = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+            
             if (_isOpen)
             {
+                result *= 2;
+                result += CustomIdMarginBottom;
                 var componentsProp = property.FindPropertyRelative(nameof(EntityPrototype.components));
 
                 for (var index = 0; index < componentsProp.arraySize; index++)
@@ -130,9 +147,9 @@ namespace Modules.Extensions.Prototypes.Editor
                     }
                 }
 
-                var buttonContent = new GUIContent("Add component");
+                var buttonContent = new GUIContent("Add proto-component");
                 var btnSize = EditorStyles.miniButtonMid.CalcSize(buttonContent);
-                result += btnSize.y + 20;
+                result += btnSize.y + 25;
             }
 
             return result;

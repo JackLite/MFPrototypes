@@ -14,7 +14,7 @@ namespace Modules.Extensions.Prototypes.Editor
     [CustomPropertyDrawer(typeof(EntityPrototype))]
     public class EntityPrototypeEditor : PropertyDrawer
     {
-        private EntityPrototypeIMGUI _entityPrototypeIMGUI;
+        protected EntityPrototypeIMGUI _entityPrototypeIMGUI;
 
         public EntityPrototypeEditor()
         {
