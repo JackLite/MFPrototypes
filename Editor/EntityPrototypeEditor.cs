@@ -74,7 +74,7 @@ namespace Modules.Extensions.Prototypes.Editor
                 if (odinImguiHackElement == null)
                     return;
 
-                odinImguiHackElement.pickingMode = PickingMode.Ignore;
+                odinImguiHackElement.enabledSelf = false;
             }, root);
         }
 
