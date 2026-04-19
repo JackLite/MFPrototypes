@@ -1,6 +1,8 @@
 ﻿using System.Globalization;
+using ModulesFramework.Data;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Modules.Extensions.Prototypes.Editor
@@ -8,21 +10,27 @@ namespace Modules.Extensions.Prototypes.Editor
     [CustomEditor(typeof(EntityProvider))]
     public class EntityProviderEditor : UnityEditor.Editor
     {
+        private Entity _entity;
         public override VisualElement CreateInspectorGUI()
         {
             var provider = (EntityProvider)target;
             var root = new VisualElement();
+            root.styleSheets.Add(Resources.Load<StyleSheet>("ModulesPrototypesUSS"));
 
-            var ent = provider.entity;
-            if (ent.IsAlive())
+            _entity = provider.entity;
+            if (_entity.IsAlive())
             {
+                var entityContainer = new VisualElement();
+                entityContainer.AddToClassList("modules-proto--entity-provider--entity-container");
                 string text;
-                if (ent.GetCustomId() == ent.Id.ToString(CultureInfo.InvariantCulture))
-                    text = $"Entity ({ent.GetCustomId()})";
+                if (_entity.GetCustomId() == _entity.Id.ToString(CultureInfo.InvariantCulture))
+                    text = $"Entity ({_entity.GetCustomId()})";
                 else
-                    text = $"{ent.GetCustomId()} ({ent.Id})";
+                    text = $"{_entity.GetCustomId()} ({_entity.Id})";
                 var label = new Label(text);
-                root.Add(label);
+                entityContainer.Add(label);
+                DrawGoToEntityBtn(entityContainer);
+                root.Add(entityContainer);
             }
 
             var destroyProperty = serializedObject.FindProperty(nameof(provider.destroyEntityWhenDestroyed));
@@ -31,6 +39,25 @@ namespace Modules.Extensions.Prototypes.Editor
             root.Add(destroyField);
 
             return root;
+        }
+
+        private void DrawGoToEntityBtn(VisualElement root)
+        {
+            if (!_entity.IsAlive() && EntityPrototypesEventBus.goToEntityClick != null)
+                return;
+
+            var button = new Button
+            {
+                text = "Go to Entity"
+            };
+            button.AddToClassList("modules-proto--go-to-entity-btn");
+            button.clicked += () => { EntityPrototypesEventBus.goToEntityClick(_entity); };
+            root.Add(button);
+        }
+
+        public override bool RequiresConstantRepaint()
+        {
+            return true;
         }
     }
 }

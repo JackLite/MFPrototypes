@@ -122,3 +122,14 @@ AddComponentCategoryView > AddComponentOneCategory {
     font-size: 15px;
     align-self: flex-start;
 }
+
+/* Entity provider */
+.modules-proto--entity-provider--entity-container {
+    flex-direction: row;
+    align-items: center;
+    padding: 5px 12px;
+}
+
+.modules-proto--go-to-entity-btn {
+    width: 100px;
+}
